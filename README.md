@@ -1,123 +1,90 @@
-Mobile App to Track Car Status for Police
+    <h1>🚓 Car Status Tracker for Police</h1>
 
-📌 Overview
+    <h2>📌 Overview</h2>
+    <p>This is a mobile application designed for police officers to <strong>track and verify vehicle status</strong> using <strong>license plate recognition</strong>. The app allows officers to scan license plates and retrieve important information, such as <em>owner details, insurance status, stolen vehicle alerts, and tickets</em>.</p>
 
-This is a mobile application designed for police officers to track and verify vehicle status using license plate recognition. The app allows officers to scan license plates and retrieve important information, such as owner details, insurance status, stolen vehicle alerts, and tickets.
+    <h2>🎯 Features</h2>
+    <ul>
+        <li>📸 <strong>License Plate Recognition:</strong> Automatically extract the license number from an image.</li>
+        <li>🔍 <strong>Vehicle Lookup:</strong> Search for vehicle details by entering the plate number manually.</li>
+        <li>📋 <strong>Data Retrieval:</strong> Fetch car-related data, including:
+            <ul>
+                <li>Owner information</li>
+                <li>Insurance start & end dates</li>
+                <li>Stolen vehicle status</li>
+                <li>Unpaid tickets</li>
+            </ul>
+        </li>
+        <li>🏠 <strong>Home Screen:</strong>
+            <ul>
+                <li>Search bar for quick vehicle lookups</li>
+                <li>Display the last three scanned cars</li>
+                <li>Show total number of scanned cars</li>
+            </ul>
+        </li>
+        <li>📜 <strong>Scan History:</strong> View previous scans with full details.</li>
+        <li>🔒 <strong>Authentication:</strong> Secure login with username and password.</li>
+    </ul>
 
-🎯 Features
+    <h2>🛠️ Tech Stack</h2>
 
-📸 License Plate Recognition: Automatically extract the license number from an image.
+    <h3>Frontend (Android App - Kotlin Jetpack Compose)</h3>
+    <ul>
+        <li>Jetpack Compose (UI)</li>
+        <li>CameraX (License plate scanning)</li>
+        <li>ViewModel + LiveData (State management)</li>
+        <li>Room Database (Local storage)</li>
+        <li>Retrofit (API calls)</li>
+    </ul>
 
-🔍 Vehicle Lookup: Search for vehicle details by entering the plate number manually.
+    <h3>Backend (Node.js & Express)</h3>
+    <ul>
+        <li>MySQL (Database)</li>
+        <li>JWT (Authentication)</li>
+        <li>bcrypt (Password hashing)</li>
+        <li>REST API (For data retrieval and updates)</li>
+    </ul>
 
-📋 Data Retrieval: Fetch car-related data, including:
+    <h2>🚀 Setup Instructions</h2>
 
-Owner information
-
-Insurance start & end dates
-
-Stolen vehicle status
-
-Unpaid tickets
-
-🏠 Home Screen:
-
-Search bar for quick vehicle lookups
-
-Display the last three scanned cars
-
-Show total number of scanned cars
-
-📜 Scan History: View previous scans with full details.
-
-🔒 Authentication: Secure login with username and password.
-
-🛠️ Tech Stack
-
-Frontend (Android App - Kotlin Jetpack Compose)
-
-Jetpack Compose (UI)
-
-Adobe Figma(UI Design)
-
-CameraX (License plate scanning)
-
-ViewModel + LiveData (State management)
-
-Room Database (Local storage)
-
-Retrofit (API calls)
-
-Backend (Node.js & Express)
-
-MySQL (Database)
-
-JWT (Authentication)
-
-bcrypt (Password hashing)
-
-REST API (For data retrieval and updates)
-
-🚀 Setup Instructions
-
-1️⃣ Backend Setup
-
-Install Node.js and MySQL.
-
-Clone the repository:
-
-<code>git clone https://github.com/notkisk/policeplus.git </code>
-<code>cd policeplus/backend</code>
-
-Install dependencies:
-
+    <h3>1️⃣ Backend Setup</h3>
+    <pre><code>git clone https://github.com/your-repo/police-app.git
+cd police-app/backend
 npm install
+</code></pre>
+    <p>Configure the <code>.env</code> file with database credentials.</p>
+    <pre><code>node server.js</code></pre>
 
-Configure the .env file with database credentials.
+    <h3>2️⃣ Frontend Setup (Android App)</h3>
+    <ol>
+        <li>Open the project in <strong>Android Studio</strong>.</li>
+        <li>Ensure that <strong>Kotlin and Jetpack Compose</strong> are installed.</li>
+        <li>Sync dependencies in <code>build.gradle</code>.</li>
+        <li>Update <code>BASE_URL</code> in Retrofit API service to match your backend.</li>
+        <li>Run the app on an emulator or a real device.</li>
+    </ol>
 
-Start the backend server:
+    <h2>📌 Deployment</h2>
+    <p><strong>Backend:</strong> Can be hosted on a VPS (e.g., DigitalOcean, AWS, or a local server for testing).</p>
+    <p><strong>Database:</strong> Hosted on a MySQL server (e.g., a cloud database or localhost for testing).</p>
 
-node server.js
+    <h2>🔒 Security Considerations</h2>
+    <ul>
+        <li>Use HTTPS for API communication.</li>
+        <li>Encrypt sensitive data before storing it.</li>
+        <li>Implement role-based access control (RBAC).</li>
+    </ul>
 
-2️⃣ Frontend Setup (Android App)
+    <h2>📌 Future Improvements</h2>
+    <ul>
+        <li>🧑‍💻 <strong>Biometric Authentication</strong> (Fingerprint/Face recognition)</li>
+        <li>🔔 <strong>Real-time Alerts</strong> for stolen vehicles</li>
+        <li>🌍 <strong>GPS Tracking</strong> of scanned vehicles</li>
+        <li>📊 <strong>Admin Dashboard</strong> for data analytics</li>
+    </ul>
 
-Open the project in Android Studio.
+    <h2>📞 Contact</h2>
+    <p>For any inquiries, feel free to contact <strong>[Your Name]</strong> at <strong>your-email@example.com</strong>.</p>
 
-Ensure that Kotlin and Jetpack Compose are installed.
-
-Sync dependencies in build.gradle.
-
-Update BASE_URL in Retrofit API service to match your backend.
-
-Run the app on an emulator or a real device.
-
-📌 Deployment
-
-Backend: Can be hosted on a VPS.
-
-Database: Hosted on a MySQL server.
-
-🔒 Security Considerations
-
-Use HTTPS for API communication.
-
-Encrypt sensitive data before storing it.
-
-Implement role-based access control (RBAC).
-
-📌 Future Improvements
-
-🧑‍💻 Biometric Authentication (Fingerprint/Face recognition)
-
-🔔 Real-time Alerts for stolen vehicles
-
-🌍 GPS Tracking of scanned vehicles
-
-📊 Admin Dashboard for data analytics
-
-📞 Contact
-
-For any inquiries, feel free to contact [Your Name] at your-email@example.com.
-
-© 2025 Police License Plate Recognition App. All rights reserved.
-
+    <hr>
+    <p>© 2025 Police License Plate Recognition App. All rights reserved.</p>
