@@ -1,4 +1,19 @@
-    <h1>🚓 Car Status Tracker for Police</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Police License Plate Recognition App</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
+        h1, h2 { color: #2c3e50; }
+        pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
+        code { font-family: Consolas, monospace; }
+    </style>
+</head>
+<body>
+
+    <h1>🚓 Police License Plate Recognition App</h1>
 
     <h2>📌 Overview</h2>
     <p>This is a mobile application designed for police officers to <strong>track and verify vehicle status</strong> using <strong>license plate recognition</strong>. The app allows officers to scan license plates and retrieve important information, such as <em>owner details, insurance status, stolen vehicle alerts, and tickets</em>.</p>
@@ -88,3 +103,6 @@ npm install
 
     <hr>
     <p>© 2025 Police License Plate Recognition App. All rights reserved.</p>
+
+</body>
+</html>
