@@ -1,4 +1,4 @@
-Police License Plate Recognition App
+Mobile App to Track Car Status for Police
 
 📌 Overview
 
@@ -66,8 +66,8 @@ Install Node.js and MySQL.
 
 Clone the repository:
 
-git clone https://github.com/your-repo/police-app.git
-cd police-app/backend
+<code>git clone https://github.com/notkisk/policeplus.git </code>
+<code>cd policeplus/backend</code>
 
 Install dependencies:
 
