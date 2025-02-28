@@ -45,29 +45,6 @@
 <li>REST API (For data retrieval and updates)</li>
 </ul>
 
-<h2>🚀 Setup Instructions</h2>
-
-<h3>1️⃣ Backend Setup</h3>
-<pre><code>git clone https://github.com/your-repo/police-app.git
-cd police-app/backend
-npm install
-</code></pre>
-<p>Configure the <code>.env</code> file with database credentials.</p>
-<pre><code>node server.js</code></pre>
-
-<h3>2️⃣ Frontend Setup (Android App)</h3>
-<ol>
-<li>Open the project in <strong>Android Studio</strong>.</li>
-<li>Ensure that <strong>Kotlin and Jetpack Compose</strong> are installed.</li>
-<li>Sync dependencies in <code>build.gradle</code>.</li>
-<li>Update <code>BASE_URL</code> in Retrofit API service to match your backend.</li>
-<li>Run the app on an emulator or a real device.</li>
-</ol>
-
-<h2>📌 Deployment</h2>
-<p><strong>Backend:</strong> Can be hosted on a VPS (e.g., DigitalOcean, AWS, or a local server for testing).</p>
-<p><strong>Database:</strong> Hosted on a MySQL server (e.g., a cloud database or localhost for testing).</p>
-
 <h2>🔒 Security Considerations</h2>
 <ul>
 <li>Use HTTPS for API communication.</li>
