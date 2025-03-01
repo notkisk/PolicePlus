@@ -39,7 +39,7 @@ import com.example.policeplus.ui.theme.PolicePlusBlue
 fun MainScreen() {
     val navItemsList = listOf(
         NavItem("Home", painterResource(R.drawable.home)),
-        NavItem("Notes", painterResource(R.drawable.notes)),
+        NavItem("Data", painterResource(R.drawable.details)),
         NavItem("Scan", painterResource(R.drawable.scan)),
         NavItem("Profile", painterResource(R.drawable.profile)),
         NavItem("History", painterResource(R.drawable.history))

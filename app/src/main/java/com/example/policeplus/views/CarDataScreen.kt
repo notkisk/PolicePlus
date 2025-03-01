@@ -17,6 +17,7 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -41,30 +42,28 @@ import com.example.policeplus.viewmodels.ScanViewModel
 @Composable
 fun NotesScreen(modifier: Modifier = Modifier,scanViewModel: ScanViewModel= viewModel()) {
     val extractedText by scanViewModel.extractedText.observeAsState("")
-    var showDialog by remember { mutableStateOf(true) }
+   Column (Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally){
+       Spacer(Modifier.height(50.dp))
 
-    Box(contentAlignment = Alignment.Center,modifier=Modifier.fillMaxSize()){
-        if (showDialog) {
-            ScanDetailsPopup(
-                name  = "Haithem Bekkari",
-                carPlate = extractedText,
-                insuranceStartDate="2024/10/08",
-                insuranceEndDate="2025/10/08",
-                inspectionDate="2024/10/08",
-                inspectionPeriod="2025/10/08",
-                taxStatus="Paid",
-                stolenCar="No",
-                onDismiss = { showDialog = false }
-            )
+       Text("Car Data", color = Color(0xFF5B5B5B), textAlign = TextAlign.Center,fontSize = 24.sp, fontWeight = FontWeight.Bold)
+       Spacer(Modifier.height(30.dp))
+       ScanDetails(
+           name  = "Haithem Bekkari",
+           carPlate = extractedText,
+           insuranceStartDate="2024/10/08",
+           insuranceEndDate="2025/10/08",
+           inspectionDate="2024/10/08",
+           inspectionPeriod="2025/10/08",
+           taxStatus="Paid",
+           stolenCar="No"
+       )
+   }
+
         }
 
-    }
-
-
-}
 
 @Composable
-fun ScanDetailsPopup(name: String = "Haithem Bekkari",
+fun ScanDetails(name: String = "Haithem Bekkari ",
                      carPlate:String = "5846712139",
                      insuranceStartDate:String="2024/10/08",
                      insuranceEndDate:String="2025/10/08",
@@ -72,41 +71,26 @@ fun ScanDetailsPopup(name: String = "Haithem Bekkari",
                      inspectionPeriod:String="2025/10/08",
                      taxStatus:String="Paid",
                      stolenCar:String="No"
-                     , onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = PolicePlusBlue,
-        shape = RoundedCornerShape(21.dp), modifier = Modifier.width(500.dp),
-        text = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 50.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
-                IconButton(onClick = onDismiss) {
-                    Icon(Icons.Outlined.Close, contentDescription = "Close", tint = Color.White)
-                }
-            }
+                     ) {
+    Box(Modifier.fillMaxSize().padding(top = 50.dp)){
+
+
+        Surface (
+            color = PolicePlusBlue,
+            shape = RoundedCornerShape(21.dp), modifier = Modifier.padding(24.dp).width(500.dp).height(450.dp))
+        {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Top, modifier = Modifier.padding(16.dp)
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.id_card),
-                    contentDescription = "ID Icon",
-                    tint = Color.White,
-                    modifier = Modifier.size(40.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(name, color = Color(0xFFE7E7E7), fontWeight = FontWeight.Medium, fontSize = 16.sp, textAlign = TextAlign.Center, overflow = TextOverflow.Ellipsis, modifier = Modifier.width(200.dp))
-                Text(carPlate, color = Color.White, fontSize = 16.sp)
-                Text("2024-02-24", color = Color(0xFFA7A7A7), fontSize = 11.sp)
+
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 val details = listOf(
-                    "Insurance Start Date:" to insuranceStartDate,
-                    "Insurance End Date:" to insuranceEndDate,
+                    "Owner:" to name,
+                    "License Plate:" to carPlate,
+                    "Insurance Start:" to insuranceStartDate,
+                    "Insurance End:" to insuranceEndDate,
                     "Inspection Date:" to inspectionDate,
                     "Inspection Period:" to inspectionPeriod,
                     "Tax Status:" to taxStatus,
@@ -121,9 +105,10 @@ fun ScanDetailsPopup(name: String = "Haithem Bekkari",
                     }
                 }
             }
-        },
-        confirmButton = {} // No extra button needed
-    )
+        }
+    }
+
+
 }
 
 
