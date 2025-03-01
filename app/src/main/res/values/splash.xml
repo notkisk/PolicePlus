@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.PolicePlus.ComposedSplash" parent="Theme.SplashScreen.IconBackground">
+        <item name="windowSplashScreenBackground">#0077B6</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/logo_white_with_text</item>
+        <item name="windowSplashScreenAnimationDuration">500</item>
+    </style>
+</resources>
