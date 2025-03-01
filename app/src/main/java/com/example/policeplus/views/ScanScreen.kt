@@ -15,6 +15,7 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -242,32 +244,43 @@ fun extractLicensePlateCritical(text: String):String{
 @Composable
 fun LicensePlateScannerScreen(
     onClose: () -> Unit,
-    onTextExtracted: (String) -> Unit // ✅ New callback
+    onTextExtracted: (String) -> Unit
 ) {
     var extractedText by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) } // ✅ Loading state
     val context = LocalContext.current
 
     Box(modifier = Modifier.fillMaxSize()) {
         CameraScreen { imageUri ->
+            isLoading = true // ✅ Show loading when capturing the image
             extractTextFromImage(context, imageUri) { text ->
                 extractedText = text
-                onTextExtracted(text) // ✅ Trigger callback after extraction
+                isLoading = false // ✅ Hide loading after processing
+                onTextExtracted(text) // ✅ Send extracted text
             }
         }
 
-        // Close Button (Top-Right Corner)
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
-            IconButton(
-                onClick = { onClose() },
-                modifier = Modifier.padding(16.dp).size(72.dp)
+        // ✅ Show loading overlay when processing the image
+        if (isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 1f)).zIndex(100f),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(imageVector = Icons.Outlined.Close, contentDescription = "Close", tint = Color.White)
+                CircularProgressIndicator(modifier = Modifier.size(50.dp),color = Color.White)
             }
+        }
+
+        // Close Button
+        IconButton(
+            onClick = { onClose() },
+            modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)
+        ) {
+            Icon(imageVector = Icons.Outlined.Close, contentDescription = "Close", tint = Color.White)
         }
 
         // Extracted Text Display
-        /*Column(
-            modifier = Modifier.fillMaxSize().padding(30.dp).zIndex(11f),
+        Column(
+            modifier = Modifier.fillMaxSize().padding(30.dp),
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Top
         ) {
@@ -277,11 +290,10 @@ fun LicensePlateScannerScreen(
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp
             )
-        }*/
-
-
+        }
     }
 }
+
 
 
 
