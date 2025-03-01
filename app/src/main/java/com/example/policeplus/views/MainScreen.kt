@@ -107,18 +107,20 @@ fun MainScreen() {
     ) { innerPadding ->
         ContentScreen(
             modifier = Modifier.padding(innerPadding),
-            selectedIndex = selectedIndex
+            selectedIndex = selectedIndex,
+            onSelectedIndexChange = { newIndex -> selectedIndex = newIndex } // 👈 Update state
         )
     }
 }
 
 @Composable
-fun ContentScreen(modifier: Modifier = Modifier, selectedIndex: Int) {
+fun ContentScreen(modifier: Modifier = Modifier, selectedIndex: Int, onSelectedIndexChange: (Int) -> Unit) {
     when (selectedIndex) {
         0 -> HomeScreen()
         1 -> NotesScreen()
-        2 -> ScanScreen()
+        2 -> ScanScreen(onClose = { onSelectedIndexChange(0)  }, onTextExtracted = { onSelectedIndexChange(1) }) // 👈 Go back to HomeScreen (or any other)
         3 -> ProfileScreen()
         4 -> HistoryScreen()
     }
 }
+

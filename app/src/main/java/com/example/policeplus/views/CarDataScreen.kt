@@ -1,9 +1,11 @@
-package com.example.policeplus.views.components
+package com.example.policeplus.views
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -11,26 +13,55 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.policeplus.R
-import com.example.policeplus.ui.theme.PolicePlusBlue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.policeplus.R
+import com.example.policeplus.ui.theme.PolicePlusBlue
+import com.example.policeplus.viewmodels.ScanViewModel
+
+@Composable
+fun NotesScreen(modifier: Modifier = Modifier,scanViewModel: ScanViewModel= viewModel()) {
+    val extractedText by scanViewModel.extractedText.observeAsState("")
+    var showDialog by remember { mutableStateOf(true) }
+
+    Box(contentAlignment = Alignment.Center,modifier=Modifier.fillMaxSize()){
+        if (showDialog) {
+            ScanDetailsPopup(
+                name  = "Haithem Bekkari",
+                carPlate = extractedText,
+                insuranceStartDate="2024/10/08",
+                insuranceEndDate="2025/10/08",
+                inspectionDate="2024/10/08",
+                inspectionPeriod="2025/10/08",
+                taxStatus="Paid",
+                stolenCar="No",
+                onDismiss = { showDialog = false }
+            )
+        }
+
+    }
+
+
+}
 
 @Composable
 fun ScanDetailsPopup(name: String = "Haithem Bekkari",
@@ -40,8 +71,7 @@ fun ScanDetailsPopup(name: String = "Haithem Bekkari",
                      inspectionDate:String="2024/10/08",
                      inspectionPeriod:String="2025/10/08",
                      taxStatus:String="Paid",
-                     stolenCar:String="No",
-                     isPopup:Boolean = true
+                     stolenCar:String="No"
                      , onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -49,15 +79,14 @@ fun ScanDetailsPopup(name: String = "Haithem Bekkari",
         shape = RoundedCornerShape(21.dp), modifier = Modifier.width(500.dp),
         text = {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 50.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 50.dp),
                 horizontalArrangement = Arrangement.End
             ) {
-                if(isPopup){
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Outlined.Close, contentDescription = "Close", tint = Color.White)
-                    }
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Outlined.Close, contentDescription = "Close", tint = Color.White)
                 }
-
             }
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -97,10 +126,4 @@ fun ScanDetailsPopup(name: String = "Haithem Bekkari",
     )
 }
 
-@Preview(showBackground = true)
-@Composable
-fun PreviewScanDetailsPopup() {
-    MaterialTheme {
-        ScanDetailsPopup(onDismiss = {}) // Dummy onDismiss function
-    }
-}
+
