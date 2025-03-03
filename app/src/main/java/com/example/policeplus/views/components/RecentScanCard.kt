@@ -1,5 +1,7 @@
 package com.example.policeplus.views.components
 
+import Car
+import android.icu.text.SimpleDateFormat
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,12 +37,17 @@ import androidx.compose.ui.unit.sp
 import com.example.policeplus.R
 import com.example.policeplus.ui.theme.InterFont
 import com.example.policeplus.ui.theme.PolicePlusBlue
+import java.util.Date
+import java.util.Locale
+
+
+fun getCurrentTimestamp(): String {
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+    return dateFormat.format(Date()) // Returns current date & time
+}
 
 @Composable
-fun RecentScanCard(
-    name: String = "Haithem Bekkari",
-    date: String = "Today 26 September 2025"
-) {
+fun RecentScanCard(car: Car) {
     var showDialog by remember { mutableStateOf(false) }
 
     Card(
@@ -71,19 +78,19 @@ fun RecentScanCard(
                     .padding(top = 4.dp)
             ) {
                 Text(
-                    text = date,
+                    text = "Scanned on: ${getCurrentTimestamp().toString()}",
                     color = Color(0xFFBDBDBD),
                     fontFamily = InterFont,
                     fontSize = 13.sp
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = buildAnnotatedString {
                         withStyle(style = SpanStyle(color = Color.White, fontFamily = InterFont, fontSize = 20.sp)) {
-                            append("Name: ") // ✅ Regular
+                            append("Owner: ") // ✅ Regular
                         }
                         withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, color = Color.White, fontFamily = InterFont, fontSize = 20.sp)) {
-                            append(name) // ✅ Bold
+                            append(car.owner ?: "Unknown") // ✅ Bold
                         }
                     },
                     maxLines = 1,
@@ -94,6 +101,6 @@ fun RecentScanCard(
     }
 
     if (showDialog) {
-        ScanDetailsPopup(name, onDismiss = { showDialog = false })
+        ScanDetailsPopup(car, onDismiss = { showDialog = false })
     }
 }

@@ -1,16 +1,12 @@
 package com.example.policeplus.views
 
-import androidx.compose.foundation.background
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -23,18 +19,18 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import com.example.policeplus.R
-import com.example.policeplus.models.NavItem
 import com.example.policeplus.ui.theme.PolicePlusBlue
 
+import com.example.policeplus.models.NavItem
+
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainScreen() {
     val navItemsList = listOf(
@@ -113,14 +109,16 @@ fun MainScreen() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ContentScreen(modifier: Modifier = Modifier, selectedIndex: Int, onSelectedIndexChange: (Int) -> Unit) {
     when (selectedIndex) {
-        0 -> HomeScreen()
-        1 -> NotesScreen()
-        2 -> ScanScreen(onClose = { onSelectedIndexChange(0)  }, onTextExtracted = { onSelectedIndexChange(1) }) // 👈 Go back to HomeScreen (or any other)
+        0 -> HomeScreen(onSearch = {onSelectedIndexChange(1)})
+        1 -> CarDataScreen()
+        2 -> ScanScreen(onClose = { onSelectedIndexChange(0)  }, onConfirm = { onSelectedIndexChange(1) }) // 👈 Go back to HomeScreen (or any other)
         3 -> ProfileScreen()
         4 -> HistoryScreen()
     }
 }
+
 

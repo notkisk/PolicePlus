@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.devtools.ksp")
+
 }
 
 android {
@@ -71,7 +73,21 @@ dependencies {
     implementation (libs.androidx.camera.lifecycle.v130)
     implementation (libs.androidx.camera.view.v130)
     implementation (libs.text.recognition)
-    implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
+    implementation (libs.androidx.lifecycle.viewmodel.compose)
+    implementation (libs.androidx.lifecycle.viewmodel.ktx)
+    implementation (libs.androidx.lifecycle.livedata.ktx)
+    implementation (libs.retrofit)
+    implementation (libs.converter.gson)
+    implementation (libs.logging.interceptor)
+
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.ktx)
+        implementation(libs.androidx.datastore.preferences)
+        implementation(libs.androidx.security.crypto) // For encryption
+        implementation(libs.tink.android) // Google Tink for secure encryption
+    implementation(libs.kotlinx.serialization.json)
+
 
 
 

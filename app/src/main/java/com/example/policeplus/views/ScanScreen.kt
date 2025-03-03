@@ -1,12 +1,16 @@
 package com.example.policeplus.views
 
+import CarViewModel
+import CarViewModelFactory
 import android.Manifest
+import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -26,12 +30,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,7 +59,6 @@ import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
 import androidx.exifinterface.media.ExifInterface
 import com.example.policeplus.R
-import com.example.policeplus.viewmodels.ScanViewModel
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -64,12 +70,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun ScanScreen(
     onClose: () -> Unit,
-    onTextExtracted: (Int) -> Unit ,
-    scanViewModel: ScanViewModel = viewModel() // ✅ Get ViewModel
-// ✅ New callback
+    onConfirm: () -> Unit
 ) {
     var hasPermission by remember { mutableStateOf(false) }
-
+    val viewModel: CarViewModel = viewModel()
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -80,14 +84,16 @@ fun ScanScreen(
         permissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
+    BackHandler {
+        onClose() // Navigate to Home Screen
+    }
+
     if (hasPermission) {
         Box(modifier = Modifier.fillMaxSize().zIndex(10f)) {
             LicensePlateScannerScreen(
+                viewModel = viewModel, // ✅ Pass ViewModel here
                 onClose = onClose,
-                onTextExtracted = { extractedText ->
-                    scanViewModel.setExtractedText(extractedText)
-                    onTextExtracted(1)
-                }
+                onConfirm = onConfirm
             )
 
             // Close Button (Top Right Corner)
@@ -104,16 +110,11 @@ fun ScanScreen(
 }
 
 
-
-
-
-
-
 @Composable
 fun CameraScreen(onImageCaptured: (Uri) -> Unit) {
 
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val imageCapture = remember { ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY).build() }
 
     var previewView: PreviewView? by remember { mutableStateOf(null) }
@@ -237,63 +238,81 @@ fun extractLicensePlateCritical(text: String):String{
     val cleanedText = lines.joinToString(" ") { it }
     val numericText = cleanedText.replace("[^0-9\\s]".toRegex(), "")
 
-    return numericText
+    return numericText.replace("\\s".toRegex(),"")
 }
 
 
 @Composable
 fun LicensePlateScannerScreen(
+    viewModel: CarViewModel, // ✅ Pass ViewModel to fetch data
     onClose: () -> Unit,
-    onTextExtracted: (String) -> Unit
+    onConfirm: () -> Unit
 ) {
     var extractedText by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) } // ✅ Loading state
+    var isLoading by remember { mutableStateOf(false) }
+    var showConfirmationDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     Box(modifier = Modifier.fillMaxSize()) {
         CameraScreen { imageUri ->
-            isLoading = true // ✅ Show loading when capturing the image
+            isLoading = true
             extractTextFromImage(context, imageUri) { text ->
                 extractedText = text
-                isLoading = false // ✅ Hide loading after processing
-                onTextExtracted(text) // ✅ Send extracted text
+                isLoading = false
+                showConfirmationDialog = true
             }
         }
 
-        // ✅ Show loading overlay when processing the image
         if (isLoading) {
             Box(
-                modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 1f)).zIndex(100f),
+                modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.7f)).zIndex(100f),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(modifier = Modifier.size(50.dp),color = Color.White)
+                CircularProgressIndicator(modifier = Modifier.size(50.dp), color = Color.White)
             }
         }
 
-        // Close Button
         IconButton(
             onClick = { onClose() },
             modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)
         ) {
             Icon(imageVector = Icons.Outlined.Close, contentDescription = "Close", tint = Color.White)
         }
+    }
 
-        // Extracted Text Display
-        Column(
-            modifier = Modifier.fillMaxSize().padding(30.dp),
-            horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.Top
-        ) {
-            Text(
-                text = "Extracted License: $extractedText",
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            )
-        }
+    if (showConfirmationDialog) {
+        var editedText by remember { mutableStateOf(extractedText) }
+
+        AlertDialog(
+            onDismissRequest = { showConfirmationDialog = false },
+            title = { Text("Confirm License Plate") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = editedText,
+                        onValueChange = { editedText = it },
+                        label = { Text("License Plate Number") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    viewModel.fetchCar(editedText) // ✅ Fetch car data
+                    showConfirmationDialog = false
+                    onConfirm() // ✅ Navigate to CarDataScreen
+                }) {
+                    Text("Confirm")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showConfirmationDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
-
 
 
 

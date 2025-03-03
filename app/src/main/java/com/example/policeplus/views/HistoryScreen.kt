@@ -1,36 +1,81 @@
 package com.example.policeplus.views
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import Car
+import CarViewModel
+import android.app.Application
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.policeplus.ui.theme.PolicePlusBlue
 import com.example.policeplus.ui.theme.Titles
 import com.example.policeplus.views.components.RecentScanCard
 
 @Composable
-fun HistoryScreen(modifier: Modifier = Modifier) {
-    Box(modifier=Modifier.fillMaxSize().padding(16.dp)){
+fun HistoryScreen(modifier: Modifier = Modifier, viewModel: CarViewModel = viewModel()) {
+    val carHistory by viewModel.carHistory.collectAsState()
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally,verticalArrangement = Arrangement.Center, modifier = Modifier.padding(top = 20.dp)) {
+    // Search query state
+    var searchQuery by remember { mutableStateOf("") }
+
+    // Filter history based on search
+    val filteredHistory = carHistory.filter { car ->
+        car.licenseNumber.contains(searchQuery, ignoreCase = true) ||
+                car.owner.contains(searchQuery, ignoreCase = true)
+    }
+
+    Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top,
+            modifier = Modifier.padding(top = 20.dp)
+        ) {
             Text(text = "History", fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Titles)
-            Spacer(Modifier.height(50.dp))
-            LazyColumn{items(12){
-                RecentScanCard()
-                Spacer(Modifier.height(16.dp))
-            }
-            }
+            Spacer(Modifier.height(16.dp))
 
+            // Search Bar
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                label = { Text("Search by Plate or Owner") },
+                modifier = Modifier.fillMaxWidth().background(Color.White),
+                singleLine = true, shape = RoundedCornerShape(12),
+
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    focusedIndicatorColor = PolicePlusBlue,
+                    unfocusedIndicatorColor = Color(0xFFECECEC)
+                ),
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Search
+                ),
+
+
+            )
+
+            Spacer(Modifier.height(20.dp))
+
+            LazyColumn {
+                items(filteredHistory) { car ->
+                    RecentScanCard(car) // Reuse the same card component
+                    Spacer(Modifier.height(27.dp))
+                }
+            }
         }
     }
 }
