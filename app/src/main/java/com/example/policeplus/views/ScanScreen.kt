@@ -4,13 +4,16 @@ import Car
 import CarViewModel
 import CarViewModelFactory
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.ColorFilter
 import android.graphics.Matrix
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -70,7 +73,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun ScanScreen(
-    modifier: Modifier,
     onClose: () -> Unit,
     onConfirm: () -> Unit,
     viewModel:CarViewModel
@@ -91,7 +93,7 @@ fun ScanScreen(
     }
 
     if (hasPermission) {
-        Box(modifier = Modifier.fillMaxSize().zIndex(10f)) {
+        Box(modifier = Modifier.fillMaxSize()) {
             LicensePlateScannerScreen(
                 viewModel = viewModel, // ✅ Pass ViewModel here
                 onClose = onClose,
@@ -112,6 +114,7 @@ fun ScanScreen(
 }
 
 
+@SuppressLint("RestrictedApi")
 @Composable
 fun CameraScreen(onImageCaptured: (Uri) -> Unit) {
 
@@ -149,34 +152,72 @@ fun CameraScreen(onImageCaptured: (Uri) -> Unit) {
                 }, ContextCompat.getMainExecutor(context))
             }
         )
+        var isFlashOn by remember { mutableStateOf(false) }
 
-        Column (modifier = Modifier.fillMaxSize().padding(45.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Bottom){
-            Button (
-                onClick = {
-                    val outputFile = File(context.externalCacheDir, "${System.currentTimeMillis()}.jpg")
-                    val outputOptions = ImageCapture.OutputFileOptions.Builder(outputFile).build()
-
-                    imageCapture.takePicture(
-                        outputOptions,
-                        ContextCompat.getMainExecutor(context),
-                        object : ImageCapture.OnImageSavedCallback {
-                            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                                val uri = Uri.fromFile(outputFile)
-                                onImageCaptured(uri)
-                            }
-
-                            override fun onError(exception: ImageCaptureException) {
-                                Log.e("Camera", "Image capture failed: ${exception.message}")
-                            }
-                        }
-                    )
-                }, colors = ButtonDefaults.buttonColors(
-                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(45.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Bottom
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically, // Align buttons properly
+                horizontalArrangement = Arrangement.SpaceAround // Add space between buttons
             ) {
-                Image(painter = painterResource(R.drawable.scan_button), contentDescription = "Scan Button",modifier=Modifier.size(120.dp))
+                // Capture Button (Centered)
+                Button(
+                    onClick = {
+                        val outputFile = File(context.externalCacheDir, "${System.currentTimeMillis()}.jpg")
+                        val outputOptions = ImageCapture.OutputFileOptions.Builder(outputFile).build()
+
+                        imageCapture.takePicture(
+                            outputOptions,
+                            ContextCompat.getMainExecutor(context),
+                            object : ImageCapture.OnImageSavedCallback {
+                                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                                    val uri = Uri.fromFile(outputFile)
+                                    onImageCaptured(uri)
+                                }
+
+                                override fun onError(exception: ImageCaptureException) {
+                                    Log.e("Camera", "Image capture failed: ${exception.message}")
+                                }
+                            }
+                        )
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent,
+                    )
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.scan_button),
+                        contentDescription = "Scan Button",
+                        modifier = Modifier.size(120.dp)
+                    )
+                }
+
+                // Flash Button (Right Side of Capture Button)
+                Button(
+                    onClick = {
+                        isFlashOn = !isFlashOn
+                        Toast.makeText(context, if (isFlashOn) "Flash On" else "Flash Off", Toast.LENGTH_SHORT).show()
+                        imageCapture.camera?.cameraControl?.enableTorch(isFlashOn) // Toggle flash
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            if (isFlashOn) R.drawable.flash_on
+                            else R.drawable.flash_off
+                        ),
+                        contentDescription = "Flash Toggle",
+                        // Slightly smaller than the capture button
+                    )
+                }
             }
         }
+
 
 
     }

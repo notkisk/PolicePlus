@@ -46,31 +46,42 @@ import com.example.policeplus.models.NavItem
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
-    val viewModel: CarViewModel = viewModel() // ✅ ViewModel is created once
+    val viewModel: CarViewModel = viewModel()
+
+    val currentBackStackEntry = navController.currentBackStackEntryAsState()
+    val currentRoute = currentBackStackEntry.value?.destination?.route
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = Color.White,
-        bottomBar = { BottomNavigationBar(navController) }
+        bottomBar = {
+            if (currentRoute != "scan") {  // ✅ Hide bottom bar on ScanScreen
+                BottomNavigationBar(navController)
+            }
+        }
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "home", enterTransition = {EnterTransition.None}, exitTransition = { ExitTransition.None},
+            startDestination = "home",
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("home") { HomeScreen(viewModel,onSearch = { navController.navigate("data") }) }
+            composable("home") { HomeScreen(viewModel, onSearch = { navController.navigate("data") }) }
             composable("data") { CarDataScreen(viewModel) }
             composable("scan") {
-                ScanScreen(modifier = Modifier.padding(innerPadding),
+                ScanScreen(
                     onClose = { navController.popBackStack() }, // Go back
-                    onConfirm = { navController.navigate("data") },viewModel
+                    onConfirm = { navController.navigate("data") },
+                    viewModel
                 )
             }
-            composable("profile") { ProfileScreen() }
+            composable("profile") { ProfileScreen({}) }
             composable("history") { HistoryScreen(viewModel) }
         }
     }
 }
+
 
 
 @Composable
