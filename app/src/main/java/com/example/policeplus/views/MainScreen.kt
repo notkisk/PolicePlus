@@ -90,8 +90,9 @@ fun BottomNavigationBar(navController: NavController) {
         NavItem("Home", painterResource(R.drawable.home), "home"),
         NavItem("Data", painterResource(R.drawable.details), "data"),
         NavItem("Scan", painterResource(R.drawable.scan), "scan"),
-        NavItem("Profile", painterResource(R.drawable.profile), "profile"),
-        NavItem("History", painterResource(R.drawable.history), "history")
+        NavItem("History", painterResource(R.drawable.history), "history"),
+        NavItem("Profile", painterResource(R.drawable.profile), "profile")
+
     )
 
     val currentBackStackEntry = navController.currentBackStackEntryAsState()

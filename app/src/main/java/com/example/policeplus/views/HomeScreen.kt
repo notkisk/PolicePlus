@@ -3,6 +3,8 @@ package com.example.policeplus.views
 import Car
 import CarViewModel
 import android.annotation.SuppressLint
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -50,6 +52,7 @@ import com.example.policeplus.ui.theme.PolicePlusBlue
 import com.example.policeplus.ui.theme.Titles
 import com.example.policeplus.views.components.RecentScanCard
 
+@RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("SuspiciousIndentation")
 @Composable
 fun HomeScreen(viewModel: CarViewModel, onSearch: () -> Unit) {
