@@ -1,5 +1,6 @@
 package com.example.policeplus.views
 
+import Car
 import CarViewModel
 import CarViewModelFactory
 import android.Manifest
@@ -69,11 +70,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun ScanScreen(
+    modifier: Modifier,
     onClose: () -> Unit,
-    onConfirm: () -> Unit
+    onConfirm: () -> Unit,
+    viewModel:CarViewModel
 ) {
     var hasPermission by remember { mutableStateOf(false) }
-    val viewModel: CarViewModel = viewModel()
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->

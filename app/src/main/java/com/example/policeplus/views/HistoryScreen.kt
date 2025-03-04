@@ -3,7 +3,10 @@ package com.example.policeplus.views
 import Car
 import CarViewModel
 import android.app.Application
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,8 +29,9 @@ import com.example.policeplus.ui.theme.PolicePlusBlue
 import com.example.policeplus.ui.theme.Titles
 import com.example.policeplus.views.components.RecentScanCard
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun HistoryScreen(modifier: Modifier = Modifier, viewModel: CarViewModel = viewModel()) {
+fun HistoryScreen(viewModel: CarViewModel) {
     val carHistory by viewModel.carHistory.collectAsState()
 
     // Search query state
@@ -38,13 +43,22 @@ fun HistoryScreen(modifier: Modifier = Modifier, viewModel: CarViewModel = viewM
                 car.owner.contains(searchQuery, ignoreCase = true)
     }
 
-    Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top,
             modifier = Modifier.padding(top = 20.dp)
         ) {
-            Text(text = "History", fontWeight = FontWeight.Bold, fontSize = 24.sp, color = Titles)
+            Text(
+                text = "History",
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp,
+                color = Titles
+            )
             Spacer(Modifier.height(16.dp))
 
             // Search Bar
@@ -52,33 +66,28 @@ fun HistoryScreen(modifier: Modifier = Modifier, viewModel: CarViewModel = viewM
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 label = { Text("Search by Plate or Owner") },
-                modifier = Modifier.fillMaxWidth().background(Color.White),
-                singleLine = true, shape = RoundedCornerShape(12),
-
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White),
+                singleLine = true,
+                shape = RoundedCornerShape(12),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White,
                     focusedIndicatorColor = PolicePlusBlue,
                     unfocusedIndicatorColor = Color(0xFFECECEC)
                 ),
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Search
-                ),
-
-
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search)
             )
 
             Spacer(Modifier.height(20.dp))
 
             LazyColumn {
                 items(filteredHistory) { car ->
-                    RecentScanCard(car) // Reuse the same card component
+                    RecentScanCard(car) // Using the new Scan History Card
                     Spacer(Modifier.height(27.dp))
                 }
             }
         }
     }
 }
-
-
-

@@ -2,58 +2,28 @@ import RetrofitInstance.api
 import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import androidx.datastore.core.DataStore
-import androidx.datastore.core.Serializer
-import androidx.datastore.dataStore
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.decodeFromString
-import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
 
-// Define DataStore filename
-private const val CAR_HISTORY_FILE = "car_history.json"
 
-// Serializer for CarHistory
-object CarHistorySerializer : Serializer<List<Car>> {
-    override val defaultValue: List<Car> = emptyList()
 
-    override suspend fun readFrom(input: InputStream): List<Car> {
-        return try {
-            Json.decodeFromString<List<Car>>(input.readBytes().decodeToString())
-        } catch (e: IOException) {
-            emptyList()
-        }
-    }
-
-    override suspend fun writeTo(t: List<Car>, output: OutputStream) {
-        output.write(Json.encodeToString(t).encodeToByteArray())
-    }
-}
-
-// Create DataStore
-private val Application.carHistoryDataStore: DataStore<List<Car>> by dataStore(
-    fileName = CAR_HISTORY_FILE,
-    serializer = CarHistorySerializer
-)
 
 class CarViewModel(application: Application) : AndroidViewModel(application) {
     private val carRepo = CarRepository(application)
 
-    private val _car = MutableStateFlow<Car?>(null)
-    val car: StateFlow<Car?> = _car
+    private val _car = MutableLiveData<Car?>(null)
+    val car: LiveData<Car?> = _car
 
     private val _carHistory = MutableStateFlow<List<Car>>(emptyList())
     val carHistory: StateFlow<List<Car>> = _carHistory
 
     val latestScans: StateFlow<List<Car>> = _carHistory
-        .map { it.take(2) }
+        .map { it.take(2) } // ✅ Take the most recent 2 cars
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
@@ -66,30 +36,29 @@ class CarViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun fetchCar(plate: String) {
-        Log.d("CarViewModel", "fetchCar() called with plate: $plate")
 
+
+    fun fetchCar(licensePlate: String) {
         viewModelScope.launch {
             try {
-                val response = api.getCarByPlate(plate)
+                val response = api.getCarByPlate(licensePlate)
                 if (response.isSuccessful) {
-                    response.body()?.let { fetchedCar ->
-                        _car.value = fetchedCar
+                    response.body()?.let { carData ->
+                        _car.postValue(carData) // ✅ Updating LiveData
 
-                        val updatedHistory = listOf(fetchedCar) + _carHistory.value
-                        _carHistory.value = updatedHistory
-
-                        carRepo.saveCarHistory(updatedHistory) // Save encrypted history
+                        // ✅ Add new car to history
+                        _carHistory.value = listOf(carData) + _carHistory.value
                     }
                 } else {
-                    _errorMessage.value = "Failed to fetch car data"
+                    _car.postValue(null)
                 }
             } catch (e: Exception) {
-                Log.e("CarViewModel", "Error fetching car", e)
-                _errorMessage.value = "An error occurred"
+                _car.postValue(null)
             }
         }
     }
+
+
 }
 
 

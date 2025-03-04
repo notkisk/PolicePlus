@@ -2,6 +2,8 @@ package com.example.policeplus.views.components
 
 import Car
 import android.icu.text.SimpleDateFormat
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -46,6 +48,7 @@ fun getCurrentTimestamp(): String {
     return dateFormat.format(Date()) // Returns current date & time
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun RecentScanCard(car: Car) {
     var showDialog by remember { mutableStateOf(false) }

@@ -27,6 +27,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -41,6 +42,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.policeplus.R
 import com.example.policeplus.ui.theme.InterFont
@@ -50,9 +52,9 @@ import com.example.policeplus.views.components.RecentScanCard
 
 @SuppressLint("SuspiciousIndentation")
 @Composable
-fun HomeScreen(viewModel: CarViewModel = viewModel(), modifier: Modifier = Modifier, onSearch: () -> Unit) {
+fun HomeScreen(viewModel: CarViewModel, onSearch: () -> Unit) {
     var licensePlate by remember { mutableStateOf("") }
-    val carData by viewModel.car.collectAsState() // Assuming it's StateFlow
+    val carData by viewModel.car.observeAsState() // Assuming it's StateFlow
 
     Column(
         modifier = Modifier

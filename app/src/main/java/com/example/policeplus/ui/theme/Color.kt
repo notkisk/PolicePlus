@@ -1,5 +1,6 @@
 package com.example.policeplus.ui.theme
 
+import android.graphics.Color.rgb
 import androidx.compose.ui.graphics.Color
 
 val Purple80 = Color(0xFFD0BCFF)
@@ -12,3 +13,5 @@ val Pink40 = Color(0xFF7D5260)
 
 val PolicePlusBlue = Color(0xFF0077B6)
 val Titles = Color(0xFF5B5B5B)
+val RedBadge = rgb(254,232,232)
+val RedBadgeText = rgb(245,115,119)

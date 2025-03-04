@@ -3,7 +3,9 @@ package com.example.policeplus.views.components
 import Car
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,12 +16,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,10 +33,9 @@ import com.example.policeplus.ui.theme.PolicePlusBlue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -69,7 +68,7 @@ fun ScanDetailsPopup(car: Car, isPopup: Boolean = true, onDismiss: () -> Unit) {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Car details
+                // Owner Info
                 Text(
                     text = car.owner ?: "Unknown Owner",
                     color = Color(0xFFE7E7E7),
@@ -82,41 +81,31 @@ fun ScanDetailsPopup(car: Car, isPopup: Boolean = true, onDismiss: () -> Unit) {
                 Text(text = car.licenseNumber, color = Color.White, fontSize = 16.sp)
 
                 Spacer(modifier = Modifier.height(12.dp))
-                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
-                fun formatDate(dateString: String?): String {
-                    return dateString?.let {
-                        try {
-                            Instant.parse(it).atZone(ZoneId.of("UTC")).toLocalDate().format(formatter)
-                        } catch (e: Exception) {
-                            "Invalid Date"
-                        }
-                    } ?: "Unknown"
-                }
-                // Car data list
+                // Vehicle & Owner Details
                 val details = listOf(
-                    "Insurance Start Date:" to formatDate(car.insuranceStart ?: "Unknown"),
-                    "Insurance End Date:" to formatDate(car.insuranceEnd ?: "Unknown"),
-                    "Inspection Start Date:" to formatDate(car.inspectionStart ?: "Unknown"),
-                    "Inspection End Date:" to formatDate(car.inspectionEnd ?: "Unknown"),
-                    "Tax Status:" to (car.taxPaid ?: "Unknown"),
-                    "Stolen Car:" to (car.stolen_car)
+                    "Make & Model:" to (car.makeAndModel ?: "Unknown"),
+                    "Color:" to (car.color ?: "Unknown"),
+                    "Owner Address:" to (car.address ?: "Unknown"),
+                    "Driver’s License:" to (car.driverLicense ?: "Unknown")
                 )
 
                 details.forEach { (label, value) ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(label, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                        Text(
-                            text = value,
-                            color = Color(0xFFE7E7E7),
-                            fontSize = 16.sp,
-                            textAlign = TextAlign.Start,
-                            modifier = Modifier.width(150.dp)
-                        )
-                    }
+                    InfoRowPopup(label, value)
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Registration Status Section with Badges
+                val registrationDetails = listOf(
+                    "Insurance Status:" to getValidityStatus(car.insuranceEnd),
+                    "Inspection Status:" to getValidityStatus(car.inspectionEnd),
+                    "Tax Status:" to (car.taxPaid ?: "Unknown"),
+                    "Stolen Car:" to car.stolenCar
+                )
+
+                registrationDetails.forEach { (label, value) ->
+                    InfoRowPopup(label, value, getStatusBadge(value))
                 }
             }
         },
@@ -124,3 +113,59 @@ fun ScanDetailsPopup(car: Car, isPopup: Boolean = true, onDismiss: () -> Unit) {
     )
 }
 
+// Function to check if a date is valid or expired
+@RequiresApi(Build.VERSION_CODES.O)
+fun getValidityStatus(dateString: String?): String {
+    return dateString?.let {
+        try {
+            val expirationDate = Instant.parse(it).atZone(ZoneId.of("UTC")).toLocalDate()
+            val currentDate = LocalDate.now()
+
+            if (expirationDate.isAfter(currentDate)) "Valid" else "Expired"
+        } catch (e: Exception) {
+            "Unknown"
+        }
+    } ?: "Unknown"
+}
+
+// Reusable Row with optional status badge
+@Composable
+fun InfoRowPopup(label: String, value: String, badge: @Composable (() -> Unit)? = null) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = value,
+                color = Color(0xFFE7E7E7),
+                fontSize = 16.sp,
+                textAlign = TextAlign.Start
+            )
+            badge?.invoke()
+        }
+    }
+}
+
+// Returns a composable function for the status badge
+@Composable
+fun getStatusBadge(value: String): @Composable (() -> Unit)? {
+    val color = when (value) {
+        "Expired","Not Paid" -> Color.Red
+        "Valid", "Paid","No" -> Color.Green
+        "Yes" -> Color.Red
+        else -> Color.Gray
+    }
+
+    return {
+        Box(
+            modifier = Modifier
+                .padding(start = 8.dp)
+                .background(color, shape = RoundedCornerShape(8.dp))
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+        ) {
+            Text(value, color = Color.White, fontSize = 12.sp)
+        }
+    }
+}
