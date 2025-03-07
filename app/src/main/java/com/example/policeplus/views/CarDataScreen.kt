@@ -190,10 +190,8 @@ fun InfoRow( label: String, value: String, status: String? = null) {
 @Composable
 fun BadgeStatus(status: String) {
     val color = when (status) {
-        "Expired","Unpaid" -> Color.Red
-        "Paid" -> Color.Green
-        "Safe","Valid" -> Color.Green
-        "Stolen" -> Color.Red
+        "Expired","Unpaid","Stolen" -> Color(0xFFfae3e5)
+        "Safe","Valid","Paid" -> Color(0xFFdcf2ed)
         else -> Color.Gray
     }
     Box(
@@ -202,7 +200,7 @@ fun BadgeStatus(status: String) {
             .background(color, shape = RoundedCornerShape(8.dp))
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
-        Text(status, color = Color.White, fontSize = 12.sp)
+        Text(status, color = if(status in listOf("Expired","Unpaid","Stolen"))  Color(0xFFef4444) else Color(0xFF10d981), fontSize = 12.sp)
     }
 }
 

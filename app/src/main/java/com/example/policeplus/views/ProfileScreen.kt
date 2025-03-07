@@ -81,7 +81,7 @@ fun ProfileScreen(onLogout: () -> Unit) {
         Spacer(Modifier.height(10.dp))
 
         LazyColumn(
-            modifier = Modifier.fillMaxSize().background(Color(0xFFF5F5F5)),
+            modifier = Modifier.fillMaxSize().background(Color(0xFFFFFFFF)),
             verticalArrangement = Arrangement.Center
         ) {
             items(1) {
@@ -92,7 +92,7 @@ fun ProfileScreen(onLogout: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(12.dp),
-                    colors = CardDefaults.cardColors(Color(0xFFEFEFEF))
+                    colors = CardDefaults.cardColors(Color(0xFFFFFFFF))
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
@@ -123,7 +123,7 @@ fun ProfileScreen(onLogout: () -> Unit) {
                         // Badge Number
                         Box(
                             modifier = Modifier
-                                .background(Color(0xFFE3EAFD), shape = RoundedCornerShape(8.dp))
+                                .background(Color(0xFFFFFFFF), shape = RoundedCornerShape(8.dp))
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             Text(
@@ -152,7 +152,7 @@ fun ProfileScreen(onLogout: () -> Unit) {
                 Card(
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth().padding(12.dp),
-                    colors = CardDefaults.cardColors(Color(0xFFEFEFEF))
+                    colors = CardDefaults.cardColors(Color(0xFFFFFFFF))
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("Account Information", fontWeight = FontWeight.Bold, fontSize = 16.sp)
@@ -170,7 +170,7 @@ fun ProfileScreen(onLogout: () -> Unit) {
                 Card(
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth().padding(12.dp),
-                    colors = CardDefaults.cardColors(Color(0xFFEFEFEF))
+                    colors = CardDefaults.cardColors(Color(0xFFFFFFFF))
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("Settings", fontWeight = FontWeight.Bold, fontSize = 16.sp)
