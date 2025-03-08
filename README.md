@@ -35,6 +35,7 @@
 <li>ViewModel + LiveData (State management)</li>
 <li>Room Database (Local storage)</li>
 <li>Retrofit (API calls)</li>
+<li>Dagger Hilt (Dependency injection)</li>
 </ul>
 
 <h3>Backend (Node.js & Express)</h3>
