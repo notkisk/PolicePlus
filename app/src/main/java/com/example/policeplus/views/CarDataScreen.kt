@@ -1,7 +1,7 @@
 package com.example.policeplus.views
 
 import Car
-import CarViewModel
+import com.example.policeplus.CarViewModel
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.policeplus.ui.theme.PolicePlusBlue
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -42,6 +44,9 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun CarDataScreen(viewModel: CarViewModel) {
     val car by viewModel.car.observeAsState()
+    val isLoading by viewModel.isLoading.observeAsState(false)
+    val error by viewModel.error.observeAsState("")
+
 
     Column(
         modifier = Modifier
@@ -59,11 +64,13 @@ fun CarDataScreen(viewModel: CarViewModel) {
         )
         Spacer(Modifier.height(30.dp))
 
-        car?.let {
-            ScanDetails(car = it)
-            // Show Stolen Car Alert at the bottom if the car is stolen
-
-        }?: Text("No data available", color = Color.Gray, fontSize = 16.sp)
+        if (isLoading) {
+            CircularProgressIndicator(color = PolicePlusBlue)
+        } else {
+            car?.let {
+                ScanDetails(car = it)
+            } ?: Text( if (error.isNotBlank()) error else "No data available", color = Color.Gray, fontSize = 16.sp)
+        }
 
     }
 }

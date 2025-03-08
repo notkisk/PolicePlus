@@ -1,6 +1,6 @@
 package com.example.policeplus.views
 
-import CarViewModel
+import com.example.policeplus.CarViewModel
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.EnterTransition
@@ -17,11 +17,6 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -29,7 +24,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -38,15 +33,12 @@ import androidx.navigation.compose.rememberNavController
 import com.example.policeplus.R
 import com.example.policeplus.ui.theme.PolicePlusBlue
 
-import com.example.policeplus.models.NavItem
-
-
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
-    val viewModel: CarViewModel = viewModel()
+    val viewModel: CarViewModel = hiltViewModel()
 
     val currentBackStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry.value?.destination?.route

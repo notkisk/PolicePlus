@@ -37,15 +37,16 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.policeplus.R
+import com.example.policeplus.models.CarEntity
 import com.example.policeplus.ui.theme.InterFont
 import com.example.policeplus.ui.theme.PolicePlusBlue
 import java.util.Date
 import java.util.Locale
 
 
-fun getCurrentTimestamp(): String {
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-    return dateFormat.format(Date()) // Returns current date & time
+fun formatTimestamp(timestamp: Long): String {
+    val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+    return sdf.format(Date(timestamp))
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -56,10 +57,10 @@ fun RecentScanCard(car: Car) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(72.dp)
+            .height(72.dp).padding(top = 2.dp)
             .clickable { showDialog = true }, // ✅ Open popup on click
         shape = RoundedCornerShape(21.dp),
-        colors = CardDefaults.cardColors(containerColor = PolicePlusBlue),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.elevatedCardElevation(5.dp) // ✅ Drop shadow
     ) {
         Row(
@@ -71,7 +72,7 @@ fun RecentScanCard(car: Car) {
             Icon(
                 painter = painterResource(R.drawable.id_card),
                 contentDescription = "ID Icon",
-                tint = Color.White,
+                tint = Color.Black,
                 modifier = Modifier.size(32.dp)
             )
             Spacer(Modifier.width(8.dp))
@@ -81,7 +82,7 @@ fun RecentScanCard(car: Car) {
                     .padding(top = 4.dp)
             ) {
                 Text(
-                    text = "Scanned on: ${getCurrentTimestamp().toString()}",
+                    text = "Scanned on: ${formatTimestamp(car.scanDate).toString()}",
                     color = Color(0xFFBDBDBD),
                     fontFamily = InterFont,
                     fontSize = 13.sp
@@ -89,10 +90,10 @@ fun RecentScanCard(car: Car) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = buildAnnotatedString {
-                        withStyle(style = SpanStyle(color = Color.White, fontFamily = InterFont, fontSize = 20.sp)) {
+                        withStyle(style = SpanStyle(color = Color.Black, fontFamily = InterFont, fontSize = 20.sp)) {
                             append("Owner: ") // ✅ Regular
                         }
-                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, color = Color.White, fontFamily = InterFont, fontSize = 20.sp)) {
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, color = Color(0xFF2D2D2D), fontFamily = InterFont, fontSize = 20.sp)) {
                             append(car.owner ?: "Unknown") // ✅ Bold
                         }
                     },

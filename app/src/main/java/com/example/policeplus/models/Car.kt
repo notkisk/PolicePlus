@@ -13,7 +13,8 @@ data class Car(
     @SerializedName("make_and_model") val makeAndModel: String,
     @SerializedName("color") val color: String,
     @SerializedName("driver_license") val driverLicense: String,
-    @SerializedName("address") val address: String
+    @SerializedName("address") val address: String,
+    val scanDate: Long
 
 
-    )
+)

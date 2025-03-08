@@ -73,7 +73,7 @@ fun ProfileScreen(onLogout: () -> Unit) {
     ) {
         Spacer(Modifier.height(50.dp))
         Text(
-            "Car Data",
+            "Profile",
             color = Color(0xFF5B5B5B),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold
@@ -124,7 +124,7 @@ fun ProfileScreen(onLogout: () -> Unit) {
                         Box(
                             modifier = Modifier
                                 .background(Color(0xFFFFFFFF), shape = RoundedCornerShape(8.dp))
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                .padding(horizontal = 8.dp, vertical = 6.dp)
                         ) {
                             Text(
                                 text = officer.badgeNumber,

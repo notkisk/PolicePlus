@@ -1,16 +1,9 @@
 package com.example.policeplus.views
 
-import Car
-import CarViewModel
-import CarViewModelFactory
+import com.example.policeplus.CarViewModel
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Application
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.ColorFilter
-import android.graphics.Matrix
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
@@ -42,7 +35,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -53,29 +45,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
-import androidx.exifinterface.media.ExifInterface
 import com.example.policeplus.R
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import java.io.File
-import androidx.lifecycle.viewmodel.compose.viewModel
-
 
 
 @Composable
 fun ScanScreen(
     onClose: () -> Unit,
     onConfirm: () -> Unit,
-    viewModel:CarViewModel
+    viewModel: CarViewModel
 ) {
     var hasPermission by remember { mutableStateOf(false) }
     val permissionLauncher = rememberLauncherForActivityResult(

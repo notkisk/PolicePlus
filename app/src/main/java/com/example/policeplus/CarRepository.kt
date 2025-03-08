@@ -1,52 +1,26 @@
-import android.content.Context
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.*
-import androidx.datastore.preferences.preferencesDataStore
-import com.google.crypto.tink.Aead
-import com.google.crypto.tink.KeysetHandle
-import com.google.crypto.tink.aead.AeadConfig
-import com.google.crypto.tink.aead.AeadKeyTemplates
-import com.google.gson.Gson
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.runBlocking
+package com.example.policeplus
 
-// Create an Encrypted DataStore
-val Context.encryptedDataStore by preferencesDataStore(name = "encrypted_cars")
+import androidx.lifecycle.LiveData
+import com.example.policeplus.models.CarEntity
+import javax.inject.Inject
 
-class CarRepository(private val context: Context) {
-    private val CAR_HISTORY_KEY = stringPreferencesKey("car_history")
 
-    // Initialize Tink AEAD Encryption
-    private val aead: Aead by lazy {
-        AeadConfig.register()
-        val keysetHandle = KeysetHandle.generateNew(AeadKeyTemplates.AES256_GCM)
-        keysetHandle.getPrimitive(Aead::class.java)
+class CarRepository @Inject constructor(private val carDao: CarDao) {
+    val allCars: LiveData<List<CarEntity>> = carDao.getAllCars()
+
+    suspend fun insertCar(car: CarEntity) {
+        carDao.insertCar(car)
     }
 
-    suspend fun saveCarHistory(carHistory: List<Car>) {
-        val encryptedStore = context.encryptedDataStore
-        val jsonHistory = Gson().toJson(carHistory) // Convert list to JSON
-
-        // Encrypt JSON
-        val encryptedData = aead.encrypt(jsonHistory.toByteArray(), null)
-        val encryptedString = encryptedData.joinToString(",") // Convert to String
-
-        encryptedStore.edit { preferences ->
-            preferences[CAR_HISTORY_KEY] = encryptedString
-        }
+    suspend fun deleteCar(car: CarEntity) {
+        carDao.deleteCar(car)
     }
 
-    fun loadCarHistory(): Flow<List<Car>> {
-        return context.encryptedDataStore.data.map { preferences ->
-            val encryptedString = preferences[CAR_HISTORY_KEY] ?: return@map emptyList<Car>()
+    suspend fun deleteAllCars(){
+        carDao.deleteAllCars()
+    }
 
-            try {
-                val encryptedData = encryptedString.split(",").map { it.toByte() }.toByteArray()
-                val decryptedJson = String(aead.decrypt(encryptedData, null))
-                Gson().fromJson(decryptedJson, Array<Car>::class.java).toList()
-            } catch (e: Exception) {
-                emptyList()
-            }
-        }
+    fun getCarByLicense(license: String): LiveData<CarEntity?> {
+        return carDao.getCarByLicense(license)
     }
 }

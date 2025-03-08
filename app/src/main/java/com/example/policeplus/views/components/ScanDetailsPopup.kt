@@ -33,6 +33,7 @@ import com.example.policeplus.ui.theme.PolicePlusBlue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import com.example.policeplus.models.CarEntity
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -42,7 +43,7 @@ import java.time.ZoneId
 fun ScanDetailsPopup(car: Car, isPopup: Boolean = true, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = PolicePlusBlue,
+        containerColor = Color(0xFFFFFFFF),
         shape = RoundedCornerShape(21.dp),
         modifier = Modifier.width(500.dp),
         text = {
@@ -54,7 +55,7 @@ fun ScanDetailsPopup(car: Car, isPopup: Boolean = true, onDismiss: () -> Unit) {
                 ) {
                     if (isPopup) {
                         IconButton(onClick = onDismiss) {
-                            Icon(Icons.Outlined.Close, contentDescription = "Close", tint = Color.White)
+                            Icon(Icons.Outlined.Close, contentDescription = "Close", tint = Color.Black)
                         }
                     }
                 }
@@ -63,7 +64,7 @@ fun ScanDetailsPopup(car: Car, isPopup: Boolean = true, onDismiss: () -> Unit) {
                 Icon(
                     painter = painterResource(R.drawable.id_card),
                     contentDescription = "ID Icon",
-                    tint = Color.White,
+                    tint = Color.Black,
                     modifier = Modifier.size(40.dp)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -78,7 +79,7 @@ fun ScanDetailsPopup(car: Car, isPopup: Boolean = true, onDismiss: () -> Unit) {
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.width(200.dp)
                 )
-                Text(text = car.licenseNumber, color = Color.White, fontSize = 16.sp)
+                Text(text = car.licenseNumber, color = Color(0xFF2D2D2D), fontSize = 16.sp)
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -135,11 +136,11 @@ fun InfoRowPopup(label: String, value: String, badge: @Composable (() -> Unit)? 
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(label, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        Text(label, color = Color.Black, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = value,
-                color = Color(0xFFE7E7E7),
+                color = Color(0xFF2D2D2D),
                 fontSize = 16.sp,
                 textAlign = TextAlign.Start
             )
@@ -152,20 +153,17 @@ fun InfoRowPopup(label: String, value: String, badge: @Composable (() -> Unit)? 
 @Composable
 fun getStatusBadge(value: String): @Composable (() -> Unit)? {
     val color = when (value) {
-        "Expired","Not Paid" -> Color.Red
-        "Valid", "Paid","No" -> Color.Green
-        "Yes" -> Color.Red
+        "Expired","Unpaid","Stolen","Not Paid","Yes" -> Color(0xFFfae3e5)
+        "Safe","Valid","Paid" ,"No"-> Color(0xFFdcf2ed)
         else -> Color.Gray
     }
-
-    return {
-        Box(
-            modifier = Modifier
-                .padding(start = 8.dp)
-                .background(color, shape = RoundedCornerShape(8.dp))
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-        ) {
-            Text(value, color = Color.White, fontSize = 12.sp)
-        }
-    }
+   return {Box(
+        modifier = Modifier
+            .padding(start = 8.dp)
+            .background(color, shape = RoundedCornerShape(8.dp))
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Text(value, color = if(value in listOf("Expired","Unpaid","Stolen","Not Paid","Yes"))  Color(0xFFef4444) else Color(0xFF10d981), fontSize = 12.sp)
+    }}
 }
+

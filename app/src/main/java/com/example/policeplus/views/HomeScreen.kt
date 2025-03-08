@@ -1,7 +1,6 @@
 package com.example.policeplus.views
 
-import Car
-import CarViewModel
+import com.example.policeplus.CarViewModel
 import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -40,13 +39,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.policeplus.R
+import com.example.policeplus.toEntity
 import com.example.policeplus.ui.theme.InterFont
 import com.example.policeplus.ui.theme.PolicePlusBlue
 import com.example.policeplus.ui.theme.Titles
