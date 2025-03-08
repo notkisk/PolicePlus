@@ -43,6 +43,7 @@
 <li>MySQL (Database)</li>
 <li>JWT (Authentication)</li>
 <li>bcrypt (Password hashing)</li>
+<li>Postman for Api Tests</li>
 <li>REST API (For data retrieval and updates)</li>
 </ul>
 
