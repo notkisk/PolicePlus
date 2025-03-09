@@ -48,6 +48,7 @@
 <li>REST API (For data retrieval and updates)</li>
 <li>Render for api deployment</li>
 <li>Clever Cloud for database hosting</li>
+<li>Uptimerobot for uptime monitoring</li>
 </ul>
 
 <h2>🔒 Security Considerations</h2>
