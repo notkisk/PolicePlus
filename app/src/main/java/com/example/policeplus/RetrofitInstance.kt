@@ -6,7 +6,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitInstance {
-    private const val BASE_URL = "http://192.168.1.4:5004"
+    private const val BASE_URL = "https://policeplus-api.onrender.com"
 
 
     // Token should be stored securely (e.g., in DataStore or SharedPreferences)
