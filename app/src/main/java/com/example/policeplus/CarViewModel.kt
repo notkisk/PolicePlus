@@ -1,6 +1,5 @@
 package com.example.policeplus
 
-import Car
 import RetrofitInstance.api
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -14,11 +13,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import android.app.Application
+import com.example.policeplus.models.Car
 
 @HiltViewModel
 class CarViewModel @Inject constructor(
     private val repository: CarRepository
 ) : ViewModel() {
+
     private val _car = MutableLiveData<Car?>(null)
     val car: LiveData<Car?> = _car
 

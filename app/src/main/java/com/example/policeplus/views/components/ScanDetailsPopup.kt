@@ -1,6 +1,5 @@
 package com.example.policeplus.views.components
 
-import Car
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
@@ -33,6 +32,7 @@ import com.example.policeplus.ui.theme.PolicePlusBlue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import com.example.policeplus.models.Car
 import com.example.policeplus.models.CarEntity
 import java.time.Instant
 import java.time.LocalDate

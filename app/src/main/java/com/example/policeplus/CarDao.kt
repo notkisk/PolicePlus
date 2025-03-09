@@ -1,6 +1,5 @@
 package com.example.policeplus
 
-import Car
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Delete
@@ -26,6 +25,8 @@ interface CarDao {
 
     @Query("DELETE FROM car_table")
     suspend fun deleteAllCars()
+
+
 
 
 

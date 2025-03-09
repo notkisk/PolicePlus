@@ -1,5 +1,6 @@
 package com.example.policeplus.views
 
+import RegisterScreen
 import com.example.policeplus.CarViewModel
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -17,6 +19,14 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -26,53 +36,82 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.policeplus.R
+import com.example.policeplus.UserViewModel
 import com.example.policeplus.ui.theme.PolicePlusBlue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun MainScreen() {
-    val navController = rememberNavController()
-    val viewModel: CarViewModel = hiltViewModel()
+fun MainScreen(navController: NavHostController = rememberNavController()) {
+    val userViewModel: UserViewModel = hiltViewModel()
+    val carViewModel: CarViewModel = hiltViewModel()
 
-    val currentBackStackEntry = navController.currentBackStackEntryAsState()
-    val currentRoute = currentBackStackEntry.value?.destination?.route
+    var isLoggedIn by remember { mutableStateOf<Boolean?>(null) }  // Holds login state
+    val token by userViewModel.token.collectAsState()  // ✅ Properly collect the StateFlow
+
+    LaunchedEffect(token) {
+        isLoggedIn = !token.isNullOrEmpty()  // ✅ Update login state correctly
+    }
+
+    LaunchedEffect(userViewModel.token) {
+        userViewModel.token.collect { token ->
+            RetrofitInstance.authToken = token  // ✅ Ensure API always has latest token
+        }
+    }
+
+    // Show loading until we check token
+    if (isLoggedIn == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    // If logged in, go to HomeScreen, else show LoginScreen
+    val startDestination = if (isLoggedIn == true) "home" else "login"
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = Color.White,
         bottomBar = {
-            if (currentRoute != "scan") {  // ✅ Hide bottom bar on ScanScreen
+            if (navController.currentBackStackEntryAsState().value?.destination?.route != "scan" && navController.currentBackStackEntryAsState().value?.destination?.route != "login"&&
+                navController.currentBackStackEntryAsState().value?.destination?.route != "register") {
                 BottomNavigationBar(navController)
             }
         }
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "home",
+            startDestination = startDestination,  // ✅ Conditionally set start destination
             enterTransition = { EnterTransition.None },
             exitTransition = { ExitTransition.None },
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("home") { HomeScreen(viewModel, onSearch = { navController.navigate("data") }) }
-            composable("data") { CarDataScreen(viewModel) }
-            composable("scan") {
-                ScanScreen(
-                    onClose = { navController.popBackStack() }, // Go back
-                    onConfirm = { navController.navigate("data") },
-                    viewModel
-                )
-            }
-            composable("profile") { ProfileScreen({}) }
-            composable("history") { HistoryScreen(viewModel) }
+            composable("home") { HomeScreen(carViewModel,onSearch = { navController.navigate("data") })  }
+            composable("data") { CarDataScreen(carViewModel) }
+            composable("scan") { ScanScreen({ navController.popBackStack() }, { navController.navigate("data") }, carViewModel) }
+            composable("profile") { ProfileScreen(userViewModel, onLogout = {
+                navController.navigate("login") {
+                    popUpTo("home") { inclusive = true }  // ✅ Clear backstack on logout
+                }
+                userViewModel.logout()
+            }) }
+            composable("history") { HistoryScreen(carViewModel) }
+            composable("register") { RegisterScreen(navController, userViewModel) }
+            composable("login") { LoginScreen(navController, userViewModel) }
         }
     }
 }
+
 
 
 

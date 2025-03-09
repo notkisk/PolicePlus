@@ -1,3 +1,4 @@
+package com.example.policeplus.models
 data class Officer(
     val name: String,
     val badgeNumber: String,

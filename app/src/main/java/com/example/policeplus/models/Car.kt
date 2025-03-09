@@ -1,3 +1,4 @@
+package com.example.policeplus.models
 import com.google.gson.annotations.SerializedName
 
 data class Car(

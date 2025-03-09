@@ -7,11 +7,13 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.policeplus.CarDao
 import com.example.policeplus.CarDatabase
 import com.example.policeplus.CarRepository
+import com.example.policeplus.UserRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import retrofit2.Retrofit
 import javax.inject.Singleton
 
 @Module
@@ -34,6 +36,12 @@ object DatabaseModule {
     fun provideCarDao(database: CarDatabase): CarDao {
         return database.carDao()
     }
+
+
+
+
+
+
 
 }
 

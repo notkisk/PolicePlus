@@ -1,6 +1,5 @@
 package com.example.policeplus.views.components
 
-import Car
 import android.icu.text.SimpleDateFormat
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -37,6 +36,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.policeplus.R
+import com.example.policeplus.models.Car
 import com.example.policeplus.models.CarEntity
 import com.example.policeplus.ui.theme.InterFont
 import com.example.policeplus.ui.theme.PolicePlusBlue

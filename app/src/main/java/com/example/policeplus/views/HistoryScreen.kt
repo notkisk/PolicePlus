@@ -1,6 +1,5 @@
 package com.example.policeplus.views
 
-import Car
 import com.example.policeplus.CarViewModel
 import android.os.Build
 import androidx.annotation.RequiresApi
