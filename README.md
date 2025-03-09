@@ -32,6 +32,7 @@
 <li>Jetpack Compose (UI)</li>
 <li>Adobe Figma (UI Design)</li>
 <li>CameraX (License plate scanning)</li>
+<li>Google mlkit for text recognition</li>
 <li>ViewModel + LiveData (State management)</li>
 <li>Room Database (Local storage)</li>
 <li>Retrofit (API calls)</li>
@@ -45,6 +46,8 @@
 <li>bcrypt (Password hashing)</li>
 <li>Postman for Api Tests</li>
 <li>REST API (For data retrieval and updates)</li>
+<li>Render for api deployment</li>
+<li>Clever Cloud for database hosting</li>
 </ul>
 
 <h2>🔒 Security Considerations</h2>
