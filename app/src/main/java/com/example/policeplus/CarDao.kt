@@ -11,24 +11,22 @@ import com.example.policeplus.models.CarEntity
 
 @Dao
 interface CarDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertCar(car:CarEntity)
 
     @Query("SELECT * FROM car_table ORDER BY id DESC")
     fun getAllCars(): LiveData<List<CarEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCar(car: CarEntity)
+
+    @Query("SELECT * FROM car_table WHERE user_email = :email ORDER BY id DESC")
+    fun getAllCarsByUser(email: String): LiveData<List<CarEntity>>
 
     @Query("SELECT * FROM car_table WHERE license_plate = :license")
     fun getCarByLicense(license: String): LiveData<CarEntity?>
 
     @Delete
-    suspend fun deleteCar(car:CarEntity)
+    suspend fun deleteCar(car: CarEntity)
 
     @Query("DELETE FROM car_table")
     suspend fun deleteAllCars()
-
-
-
-
-
-
 }

@@ -1,6 +1,7 @@
 package com.example.policeplus
 
 import RetrofitInstance.api
+import UserPreferences
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -14,12 +15,17 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import com.example.policeplus.models.Car
 
 @HiltViewModel
 class CarViewModel @Inject constructor(
+    application: Application, // <- add this
     private val repository: CarRepository
-) : ViewModel() {
+) : AndroidViewModel(application) {
+
+    private val userPreferences = UserPreferences(application)
+
 
     private val _car = MutableLiveData<Car?>(null)
     val car: LiveData<Car?> = _car
@@ -27,23 +33,30 @@ class CarViewModel @Inject constructor(
     private val _carHistory = MutableStateFlow<List<Car>>(emptyList())
     val carHistory: StateFlow<List<Car>> = _carHistory
 
-    private val _isLoading = MutableLiveData<Boolean> (false)
+    private val _isLoading = MutableLiveData(false)
     val isLoading: LiveData<Boolean> = _isLoading
 
-    private val _error = MutableLiveData<String>("")
+    private val _error = MutableLiveData("")
     val error: LiveData<String> = _error
 
-    val allCars: LiveData<List<CarEntity>> = repository.allCars
+    private var userEmail: String = ""
 
-    private fun insert(car: CarEntity) = viewModelScope.launch {
-        repository.insertCar(car)
-    }
+    private var _allCars = MutableLiveData<List<CarEntity>>()
+    val allCars: LiveData<List<CarEntity>> get() = _allCars
 
     init {
-        // Observe the Room database and update carHistory
+        loadUserAndHistory()
+    }
+
+     fun loadUserAndHistory() {
         viewModelScope.launch {
-            repository.allCars.asFlow().collect { carEntities ->
-                _carHistory.value = carEntities.map { it.toCar() }
+            val user = userPreferences.getUser()
+            user?.let { it ->
+                userEmail = it.email
+                repository.getCarsByUser(userEmail).observeForever { cars ->
+                    _allCars.value = cars
+                    _carHistory.value = cars.map { it.toCar() }
+                }
             }
         }
     }
@@ -62,7 +75,7 @@ class CarViewModel @Inject constructor(
                 if (response.isSuccessful) {
                     response.body()?.let { carData ->
                         _car.postValue(carData)
-                        insert(carData.toEntity())
+                        insert(carData.toEntity(userEmail)) // ✅ Save with correct user
                     }
                 } else {
                     _error.postValue(response.message())
@@ -70,16 +83,17 @@ class CarViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _car.postValue(null)
-            }finally {
+            } finally {
                 _isLoading.postValue(false)
-
             }
         }
     }
+
+    private fun insert(car: CarEntity) = viewModelScope.launch {
+        repository.insertCar(car)
+    }
 }
-
-
-fun Car.toEntity(): CarEntity {
+fun Car.toEntity(userEmail: String): CarEntity {
     return CarEntity(
         licenseNumber = this.licenseNumber,
         owner = this.owner,
@@ -93,7 +107,8 @@ fun Car.toEntity(): CarEntity {
         color = this.color,
         driverLicense = this.driverLicense,
         address = this.address,
-        scanDate = System.currentTimeMillis()
+        scanDate = System.currentTimeMillis(),
+        userEmail = userEmail
     )
 }
 
@@ -115,6 +130,4 @@ fun CarEntity.toCar(): Car {
         scanDate = this.scanDate
     )
 }
-
-
 

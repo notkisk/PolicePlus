@@ -15,12 +15,22 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -30,6 +40,8 @@ import androidx.compose.ui.unit.sp
 import com.example.policeplus.R
 import com.example.policeplus.ui.theme.PolicePlusBlue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.policeplus.models.Car
@@ -157,7 +169,7 @@ fun getStatusBadge(value: String): @Composable (() -> Unit)? {
         "Safe","Valid","Paid" ,"No"-> Color(0xFFdcf2ed)
         else -> Color.Gray
     }
-   return {Box(
+    return {Box(
         modifier = Modifier
             .padding(start = 8.dp)
             .background(color, shape = RoundedCornerShape(8.dp))
@@ -166,4 +178,3 @@ fun getStatusBadge(value: String): @Composable (() -> Unit)? {
         Text(value, color = if(value in listOf("Expired","Unpaid","Stolen","Not Paid","Yes"))  Color(0xFFef4444) else Color(0xFF10d981), fontSize = 12.sp)
     }}
 }
-

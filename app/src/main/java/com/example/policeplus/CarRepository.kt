@@ -6,8 +6,6 @@ import javax.inject.Inject
 
 
 class CarRepository @Inject constructor(private val carDao: CarDao) {
-    val allCars: LiveData<List<CarEntity>> = carDao.getAllCars()
-
     suspend fun insertCar(car: CarEntity) {
         carDao.insertCar(car)
     }
@@ -23,4 +21,9 @@ class CarRepository @Inject constructor(private val carDao: CarDao) {
     fun getCarByLicense(license: String): LiveData<CarEntity?> {
         return carDao.getCarByLicense(license)
     }
+
+    fun getCarsByUser(email: String): LiveData<List<CarEntity>> {
+        return carDao.getAllCarsByUser(email)
+    }
 }
+

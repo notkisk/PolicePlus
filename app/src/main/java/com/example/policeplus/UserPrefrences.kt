@@ -6,9 +6,9 @@ import com.example.policeplus.models.User
 import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import javax.inject.Singleton
 
 private val Context.dataStore by preferencesDataStore(name = "user_prefs")
-
 class UserPreferences(private val context: Context) {
 
     companion object {

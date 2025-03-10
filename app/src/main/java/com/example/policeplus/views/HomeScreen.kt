@@ -5,7 +5,9 @@ import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,11 +23,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -43,6 +47,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.policeplus.R
+import com.example.policeplus.models.Car
 import com.example.policeplus.toEntity
 import com.example.policeplus.ui.theme.InterFont
 import com.example.policeplus.ui.theme.PolicePlusBlue
@@ -53,6 +58,11 @@ import com.example.policeplus.views.components.RecentScanCard
 @SuppressLint("SuspiciousIndentation")
 @Composable
 fun HomeScreen(viewModel: CarViewModel, onSearch: () -> Unit) {
+
+
+    LaunchedEffect(Unit) {
+        viewModel.loadUserAndHistory()
+    }
     var licensePlate by remember { mutableStateOf("") }
     val carData by viewModel.car.observeAsState() // Assuming it's StateFlow
 
@@ -168,4 +178,6 @@ fun HomeScreen(viewModel: CarViewModel, onSearch: () -> Unit) {
             }
         }
     }
+
+
 }
