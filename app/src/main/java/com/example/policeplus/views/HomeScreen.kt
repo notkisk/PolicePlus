@@ -1,12 +1,23 @@
 package com.example.policeplus.views
 
+import TicketDraftViewModel
 import com.example.policeplus.CarViewModel
 import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDp
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,17 +32,25 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -45,6 +64,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
@@ -53,6 +74,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.policeplus.R
 import com.example.policeplus.UserViewModel
@@ -191,60 +214,144 @@ fun HomeScreen(viewModel: CarViewModel, onSearch: () -> Unit,navController:NavCo
         }
     }
 
-Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd){
 
-    SpeedDialFab()
+    SpeedDialFab(navController)
 
-}
 }
 
 
 
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SpeedDialFab() {
-    var isExpanded by remember{ mutableStateOf(false) }
-    Box(modifier = Modifier.fillMaxSize()){
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.End,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 16.dp, bottom = 80.dp)
-        )
+fun SpeedDialFab(navController: NavController, draftViewModel: TicketDraftViewModel = viewModel()) {
+    var isExpanded by remember { mutableStateOf(false) }
+    val transition = updateTransition(targetState = isExpanded, label = "FAB Transition")
 
-        {
-            if(isExpanded){
-                MiniFab(icon= Icons.Default.Edit, label = "Create A Ticket"){
+    val fabShape by transition.animateDp(label = "FAB Shape") { expanded ->
+        if (expanded) 28.dp else 12.dp
+    }
 
-                    isExpanded=false
+    val iconRotation by transition.animateFloat(label = "FAB Icon Rotation") { expanded ->
+        if (expanded) 45f else 0f
+    }
+
+    var showTicketDrawer by remember { mutableStateOf(false) }
+    var resumeDraft by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.BottomEnd
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalAlignment = Alignment.End
+        ) {
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = fadeIn(tween(300)) + slideInVertically(tween(300), initialOffsetY = { it }),
+                exit = fadeOut(tween(200)) + slideOutVertically(tween(200), targetOffsetY = { it })
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalAlignment = Alignment.End
+                ) {
+                    if (draftViewModel.hasDraft) {
+                        MiniFab(icon = Icons.Default.Refresh, label = "Resume Draft") {
+                            isExpanded = false
+                            resumeDraft = true
+                            showTicketDrawer = true
+                        }
+                    }
+                    MiniFab(icon = Icons.Default.Edit, label = "Create A Ticket") {
+                        draftViewModel.clearDraft()
+                        isExpanded = false
+                        resumeDraft = false
+                        showTicketDrawer = true
+                    }
+                    MiniFab(icon = Icons.Default.Warning, label = "Report A Car") {
+                        isExpanded = false
+                    }
                 }
-                MiniFab(icon= Icons.Default.Warning, label = "Report A Car"){
-                    isExpanded=false
-                }
-
             }
+
             FloatingActionButton(
-                onClick = { isExpanded=!isExpanded },
+                onClick = { isExpanded = !isExpanded },
                 containerColor = PolicePlusBlue,
                 contentColor = Color.White,
-                modifier = Modifier.size(90.dp).padding(25.dp)
+                modifier = Modifier
+                    .padding(bottom = 10.dp)
+                    .size(56.dp),
+                shape = RoundedCornerShape(fabShape),
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp)
             ) {
-                Text("+")
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = if (isExpanded) "Close" else "Open Menu",
+                    modifier = Modifier.rotate(iconRotation)
+                )
             }
-
         }
-
     }
 
+    if (showTicketDrawer) {
+        TicketFormDrawer(
+            onClose = { showTicketDrawer = false },
+            resumeDraft = resumeDraft,
+            draftViewModel = draftViewModel
+        )
+    }
+
+    if (draftViewModel.hasDraft && !showTicketDrawer) {
+        Snackbar(
+            action = {
+                Text(
+                    text = "Resume",
+                    color = PolicePlusBlue,
+                    modifier = Modifier.clickable {
+                        showTicketDrawer = true
+                        resumeDraft = true
+                    }
+                )
+            },
+            modifier = Modifier.padding(bottom = 80.dp)
+        ) { Text("Draft saved") }
+    }
 }
 
 @Composable
-fun MiniFab(icon: ImageVector, label:String, onClick:()->Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End){
-        Text(text=label,modifier=Modifier.padding(end=8.dp))
-        FloatingActionButton(onClick = onClick, modifier = Modifier.size(40.dp), containerColor = MaterialTheme.colorScheme.secondary) {
-            Icon(icon, contentDescription = label)
+fun MiniFab(icon: ImageVector, label: String, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onClick() },
+        shadowElevation = 8.dp,
+        shape = RoundedCornerShape(16.dp),
+        color = Color.White.copy(alpha = 0.98f)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.End,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+        ) {
+            Text(
+                text = label,
+                fontSize = 14.sp,
+                color = Color.Black,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(PolicePlusBlue),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = label, tint = Color.White, modifier = Modifier.size(18.dp))
+            }
         }
     }
 }
-
 

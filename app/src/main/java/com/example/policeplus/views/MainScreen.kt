@@ -1,6 +1,7 @@
 package com.example.policeplus.views
 
 import RegisterScreen
+import TicketDraftViewModel
 import com.example.policeplus.CarViewModel
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -60,6 +61,7 @@ import com.example.policeplus.ui.theme.PolicePlusBlue
 fun MainScreen(navController: NavHostController = rememberNavController()) {
     val userViewModel: UserViewModel = hiltViewModel()
     val carViewModel: CarViewModel = hiltViewModel()
+    val ticketsDraftViewModel: TicketDraftViewModel = hiltViewModel()
 
     var isLoggedIn by remember { mutableStateOf<Boolean?>(null) }  // Holds login state
     val token by userViewModel.token.collectAsState()  // ✅ Properly collect the StateFlow
@@ -115,7 +117,6 @@ fun MainScreen(navController: NavHostController = rememberNavController()) {
             composable("register") { RegisterScreen(navController, userViewModel) }
             composable("login") { LoginScreen(navController, userViewModel) }
             composable("about") { AboutScreen({navController.popBackStack()}) }
-            composable("tickets") { TicketsScreen(navController) }
         }
     }
 }

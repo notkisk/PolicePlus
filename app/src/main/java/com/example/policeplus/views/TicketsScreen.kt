@@ -1,6 +1,7 @@
 
 package com.example.policeplus.views
 
+import TicketDraftViewModel
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
@@ -11,69 +12,100 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.policeplus.ui.theme.PolicePlusBlue
+import com.example.policeplus.ui.theme.Titles
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TicketsScreen(navController: NavController) {
-    var licenseNumber by remember { mutableStateOf("") }
-    var selectedFamily by remember { mutableStateOf("") }
-    var ticketDetails by remember { mutableStateOf("") }
-    val ticketFamilies = listOf("Speeding", "Parking Violation", "Reckless Driving", "Expired License","Expired Insurance/Inspection","Unpaid Tax", "No Seatbelt", "Other")
+fun TicketFormDrawer(
+    onClose: () -> Unit,
+    resumeDraft: Boolean = false,
+    draftViewModel: TicketDraftViewModel = viewModel()
+) {
+    var licenseNumber by remember { mutableStateOf(draftViewModel.licenseNumber) }
+    var selectedFamily by remember { mutableStateOf(draftViewModel.selectedFamily) }
+    var ticketDetails by remember { mutableStateOf(draftViewModel.ticketDetails) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        contentAlignment = Alignment.TopCenter
+    val ticketFamilies = listOf(
+        "Speeding", "Parking Violation", "Reckless Driving", "Expired License",
+        "Expired Insurance/Inspection", "Unpaid Tax", "No Seatbelt", "Other"
+    )
+
+    var dropdownExpanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
+    // Sync to ViewModel
+    LaunchedEffect(licenseNumber, selectedFamily, ticketDetails) {
+        draftViewModel.licenseNumber = licenseNumber
+        draftViewModel.selectedFamily = selectedFamily
+        draftViewModel.ticketDetails = ticketDetails
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = { onClose() },
+        containerColor = Color.White,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Issue a Ticket", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Issue a Ticket", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Titles)
             Spacer(modifier = Modifier.height(16.dp))
 
-            // License Number Input
             OutlinedTextField(
                 value = licenseNumber,
                 onValueChange = { licenseNumber = it },
                 label = { Text("License Number") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Ticket Family Dropdown
-            var expanded by remember { mutableStateOf(false) }
-            Box {
+            ExposedDropdownMenuBox(
+                expanded = dropdownExpanded,
+                onExpandedChange = { dropdownExpanded = !dropdownExpanded }
+            ) {
                 OutlinedTextField(
                     value = selectedFamily,
                     onValueChange = {},
-                    label = { Text("Ticket Family") },
+                    label = { Text("Ticket Type") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded) },
                     readOnly = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    trailingIcon = {
-                        IconButton(onClick = { expanded = true }) {
-                            Icon(Icons.Default.ArrowDropDown, contentDescription = "Dropdown")
-                        }
-                    }
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
-
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
+                ExposedDropdownMenu(
+                    expanded = dropdownExpanded,
+                    onDismissRequest = { dropdownExpanded = false }
                 ) {
-                    ticketFamilies.forEach { family ->
+                    ticketFamilies.forEach { item ->
                         DropdownMenuItem(
-                            text = { Text(family) },
+                            text = { Text(item) },
                             onClick = {
-                                selectedFamily = family
-                                expanded = false
+                                selectedFamily = item
+                                dropdownExpanded = false
                             }
                         )
                     }
@@ -82,24 +114,50 @@ fun TicketsScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Ticket Details Input
             OutlinedTextField(
                 value = ticketDetails,
                 onValueChange = { ticketDetails = it },
-                label = { Text("Ticket Details") },
-                modifier = Modifier.fillMaxWidth(),
-                maxLines = 4
+                label = { Text("Details (Optional)") },
+                modifier = Modifier.fillMaxWidth().height(120.dp),
+                shape = RoundedCornerShape(12.dp),
+                maxLines = 5
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Submit Button
             Button(
-                onClick = { /* Handle Ticket Submission */ },
-                modifier = Modifier.fillMaxWidth()
+                onClick = {
+                    if (licenseNumber.isNotBlank() && selectedFamily.isNotBlank()) {
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar("✅ Ticket submitted successfully")
+                            draftViewModel.clearDraft()
+                            onClose()
+                        }
+                    } else {
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar("⚠️ Please fill all required fields")
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = PolicePlusBlue)
             ) {
-                Text("Submit Ticket")
+                Text("Submit Ticket", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedButton(
+                onClick = onClose,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Cancel")
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
+        SnackbarHost(hostState = snackbarHostState)
     }
 }
