@@ -6,13 +6,21 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -31,6 +39,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -106,7 +115,7 @@ fun MainScreen(navController: NavHostController = rememberNavController()) {
             composable("register") { RegisterScreen(navController, userViewModel) }
             composable("login") { LoginScreen(navController, userViewModel) }
             composable("about") { AboutScreen({navController.popBackStack()}) }
-
+            composable("tickets") { TicketsScreen(navController) }
         }
     }
 }
@@ -130,7 +139,9 @@ fun BottomNavigationBar(navController: NavController) {
     val currentRoute = currentBackStackEntry.value?.destination?.route
 
     Box(
-        modifier = Modifier.fillMaxWidth().shadow(15.dp, shape = RectangleShape)
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(15.dp, shape = RectangleShape)
     ) {
         NavigationBar(containerColor = Color.White, tonalElevation = 0.dp) {
             navItemsList.forEachIndexed { index, item ->
@@ -170,9 +181,6 @@ fun BottomNavigationBar(navController: NavController) {
         }
     }
 }
-
-
 data class NavItem(val label: String, val icon: Painter, val route: String)
-
 
 
