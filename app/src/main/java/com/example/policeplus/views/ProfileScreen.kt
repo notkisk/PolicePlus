@@ -1,5 +1,8 @@
 package com.example.policeplus.views
 
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -48,17 +51,20 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.policeplus.R
 import com.example.policeplus.UserViewModel
 
+
 @Composable
-fun ProfileScreen(userViewModel: UserViewModel, onLogout: () -> Unit) {
+fun ProfileScreen(userViewModel: UserViewModel, onLogout: () -> Unit,navController: NavController) {
     val officer by userViewModel.profileData.observeAsState()
     var showDialog by remember { mutableStateOf(false) }
     var dialogMessage by remember { mutableStateOf("") }
-
+    val context = LocalContext.current
     val localOfficer = userViewModel.localUser.observeAsState().value
 
     val user = officer?.user ?: localOfficer
@@ -132,7 +138,6 @@ fun ProfileScreen(userViewModel: UserViewModel, onLogout: () -> Unit) {
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceEvenly
                             ) {
-                                ProfileStat(title = "Scans", value = user.carsScanned.toString())
                                 user.rank?.let { ProfileStat(title = "Rank", value = it) }
                                 user.department?.let { ProfileStat(title = "Dept", value = it) }
                             }
@@ -169,29 +174,36 @@ fun ProfileScreen(userViewModel: UserViewModel, onLogout: () -> Unit) {
                             Spacer(modifier = Modifier.height(12.dp))
 
                             SettingsItem(painterResource(R.drawable.outline_settings_24), "App Settings") {
-                                showDialog = true
-                                dialogMessage = "Manage application preferences."
+                                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                    data = Uri.parse("package:" + context.packageName)
+                                }
+                                context.startActivity(intent)
                             }
 
                             SettingsItem(painterResource(R.drawable.outline_notifications_24), "Notifications") {
-                                showDialog = true
-                                dialogMessage = "Control notification settings."
+                                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                    putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                                }
+                                context.startActivity(intent)
                             }
 
-                            SettingsItem(painterResource(R.drawable.outline_lock_24), "Privacy & Security") {
-                                showDialog = true
-                                dialogMessage = "Adjust your security settings."
+                            SettingsItem(painterResource(R.drawable.outline_bug_report_24), "Report Bug/Issue") {
+                                val url = "https://github.com/notkisk/PolicePlus/issues"
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                context.startActivity(intent)
                             }
 
-                            SettingsItem(painterResource(R.drawable.outline_info_24), "Help & Support") {
-                                showDialog = true
-                                dialogMessage = "Get help or contact support."
+                            SettingsItem(painterResource(R.drawable.outline_email_24), "Help & Support") {
+                                // Navigate to a Help screen or external FAQ page
+                                val url = "https://github.com/notkisk/PolicePlus"
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                context.startActivity(intent)
                             }
 
                             SettingsItem(painterResource(R.drawable.outline_shield_24), "About PolicePlus") {
-                                showDialog = true
-                                dialogMessage = "Learn more about this app."
+                                navController.navigate("about") // Create a composable screen route called "about"
                             }
+
                         }
                     }
 

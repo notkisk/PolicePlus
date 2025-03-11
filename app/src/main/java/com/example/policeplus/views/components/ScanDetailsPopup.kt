@@ -1,8 +1,12 @@
 package com.example.policeplus.views.components
 
+import android.content.Intent
 import android.os.Build
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,23 +17,32 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
@@ -40,100 +53,227 @@ import androidx.compose.ui.unit.sp
 import com.example.policeplus.R
 import com.example.policeplus.ui.theme.PolicePlusBlue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.navigation.NavController
 import com.example.policeplus.models.Car
 import com.example.policeplus.models.CarEntity
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
+
 @RequiresApi(Build.VERSION_CODES.O)
-@Composable
-fun ScanDetailsPopup(car: Car, isPopup: Boolean = true, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = Color(0xFFFFFFFF),
-        shape = RoundedCornerShape(21.dp),
-        modifier = Modifier.width(500.dp),
-        text = {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                // Close button
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    if (isPopup) {
-                        IconButton(onClick = onDismiss) {
-                            Icon(Icons.Outlined.Close, contentDescription = "Close", tint = Color.Black)
-                        }
-                    }
-                }
-
-                // Icon
-                Icon(
-                    painter = painterResource(R.drawable.id_card),
-                    contentDescription = "ID Icon",
-                    tint = Color.Black,
-                    modifier = Modifier.size(40.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Owner Info
-                Text(
-                    text = car.owner ?: "Unknown Owner",
-                    color = Color(0xFFE7E7E7),
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 16.sp,
-                    textAlign = TextAlign.Center,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.width(200.dp)
-                )
-                Text(text = car.licenseNumber, color = Color(0xFF2D2D2D), fontSize = 16.sp)
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Vehicle & Owner Details
-                val details = listOf(
-                    "Make & Model:" to (car.makeAndModel ?: "Unknown"),
-                    "Color:" to (car.color ?: "Unknown"),
-                    "Owner Address:" to (car.address ?: "Unknown"),
-                    "Driver’s License:" to (car.driverLicense ?: "Unknown")
-                )
-
-                details.forEach { (label, value) ->
-                    InfoRowPopup(label, value)
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Registration Status Section with Badges
-                val registrationDetails = listOf(
-                    "Insurance Status:" to getValidityStatus(car.insuranceEnd),
-                    "Inspection Status:" to getValidityStatus(car.inspectionEnd),
-                    "Tax Status:" to (car.taxPaid ?: "Unknown"),
-                    "Stolen Car:" to car.stolenCar
-                )
-
-                registrationDetails.forEach { (label, value) ->
-                    InfoRowPopup(label, value, getStatusBadge(value))
-                }
-            }
-        },
-        confirmButton = {} // No extra button needed
-    )
+fun formatDateDisplay(dateString: String?): String {
+    return try {
+        val timestamp = Instant.parse(dateString).toEpochMilli()
+        formatTimestamp2(timestamp)
+    } catch (e: Exception) {
+        "Unknown"
+    }
 }
 
-// Function to check if a date is valid or expired
+// updated version
+@OptIn(ExperimentalMaterial3Api::class)
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun ScanDetailsPopup(car: Car, officerName: String, scanDate: String, onDismiss: () -> Unit, navController: NavController) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    val clipboardManager = LocalClipboardManager.current
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        containerColor = Color.White
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = car.owner ?: "Unknown Owner",
+                color = Color.Black,
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp,
+                textAlign = TextAlign.Center, modifier = Modifier.clickable {
+                    clipboardManager.setText(AnnotatedString(car.licenseNumber))
+                }
+            )
+            Box(
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .background(Color(0xFFFFCA0B), shape = RoundedCornerShape(12.dp))
+                    .border(1.dp, Color.Gray, RoundedCornerShape(12.dp))
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = car.licenseNumber,
+                    color = Color.Black,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.ExtraBold, modifier = Modifier.clickable {
+                        clipboardManager.setText(AnnotatedString(car.licenseNumber))
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            val isCritical = getValidityStatus(car.insuranceEnd) == "Expired" || car.stolenCar == "Yes"
+            if (isCritical) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFF44336), RoundedCornerShape(12.dp))
+                        .padding(12.dp)
+                ) {
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Icon(
+                            painterResource(R.drawable.outline_report_problem_24),
+                            contentDescription = "alert",
+                            tint = Color.White,
+                            modifier = Modifier.padding(end = 4.dp)
+                        )
+                        Text("This vehicle has critical issues", color = Color.White, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("🧾", fontSize = 18.sp)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Vehicle Info", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                    val details = listOf(
+                        "Make & Model:" to (car.makeAndModel ?: "Unknown"),
+                        "Color:" to (car.color ?: "Unknown"),
+                        "📍 Owner Address:" to (car.address ?: "Unknown"),
+                        "Driver’s License:" to (car.driverLicense ?: "Unknown")
+                    )
+                    details.forEach { (label, value) ->
+                        InfoRowPopup(label, value)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("🛡️", fontSize = 18.sp)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Registration Info", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                    val registrationDetails = listOf(
+                        "Insurance Status:" to (formatDateDisplay(car.insuranceEnd) ?: "Unknown"),
+                        "Inspection Status:" to (formatDateDisplay(car.inspectionEnd) ?: "Unknown"),
+                        "Tax Status:" to (car.taxPaid ?: "Unknown"),
+                        "Stolen Car:" to car.stolenCar
+                    )
+                    registrationDetails.forEach { (label, rawValue) ->
+                        val status = when (label) {
+                            "Insurance Status:" -> getValidityStatus(car.insuranceEnd)
+                            "Inspection Status:" -> getValidityStatus(car.inspectionEnd)
+                            "Tax Status:" -> car.taxPaid ?: "Unknown"
+                            "Stolen Car:" -> car.stolenCar
+                            else -> null
+                        }
+                        InfoRowPopup(label, rawValue, status?.let { getStatusBadge(it) {
+                            coroutineScope.launch { snackbarHostState.showSnackbar("$label - $it") }
+                        } })
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Scanned by Officer $officerName • $scanDate",
+                fontSize = 12.sp,
+                color = Color.Gray
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            val clipboardManager = LocalClipboardManager.current
+            val context = LocalContext.current
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    IconButton(onClick = {
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, buildCarInfoString(car))
+                        }
+                        context.startActivity(Intent.createChooser(shareIntent, "Share Vehicle Info"))
+                    }) {
+                        Icon(Icons.Default.Share, contentDescription = "Share Info")
+                    }
+                    Text("Share", fontSize = 12.sp, color = Color.Gray)
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    IconButton(onClick = {
+                        clipboardManager.setText(AnnotatedString(buildCarInfoString(car)))
+                        coroutineScope.launch { snackbarHostState.showSnackbar("Copied to clipboard") }
+                    }) {
+                        Icon(painterResource(R.drawable.outline_content_copy_24), contentDescription = "Copy Info")
+                    }
+                    Text("Copy", fontSize = 12.sp, color = Color.Gray)
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    IconButton(onClick = {
+                        navController.navigate("scan")
+                        Toast.makeText(context, "Capture Again clicked", Toast.LENGTH_SHORT).show()
+                    }) {
+                        Icon(painterResource(R.drawable.scan), contentDescription = "Capture Again", tint = Color.Unspecified)
+                    }
+                    Text("Rescan", fontSize = 12.sp, color = Color.Gray)
+                }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+        SnackbarHost(hostState = snackbarHostState)
+    }
+}
+
+
 @RequiresApi(Build.VERSION_CODES.O)
 fun getValidityStatus(dateString: String?): String {
     return dateString?.let {
         try {
             val expirationDate = Instant.parse(it).atZone(ZoneId.of("UTC")).toLocalDate()
             val currentDate = LocalDate.now()
-
             if (expirationDate.isAfter(currentDate)) "Valid" else "Expired"
         } catch (e: Exception) {
             "Unknown"
@@ -141,40 +281,79 @@ fun getValidityStatus(dateString: String?): String {
     } ?: "Unknown"
 }
 
-// Reusable Row with optional status badge
 @Composable
 fun InfoRowPopup(label: String, value: String, badge: @Composable (() -> Unit)? = null) {
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, color = Color.Black, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(label, color = Color.Black, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
             Text(
                 text = value,
                 color = Color(0xFF2D2D2D),
-                fontSize = 16.sp,
-                textAlign = TextAlign.Start
+                fontSize = 14.sp,
+                textAlign = TextAlign.Start,
+                modifier = Modifier.clickable {
+                    clipboardManager.setText(AnnotatedString(value))
+                    Toast.makeText(context, "Copied: $value", Toast.LENGTH_SHORT).show()
+                }
             )
-            badge?.invoke()
+        }
+        if (badge != null) {
+            Box(modifier = Modifier.padding(start = 8.dp)) {
+                badge()
+            }
         }
     }
 }
 
-// Returns a composable function for the status badge
-@Composable
-fun getStatusBadge(value: String): @Composable (() -> Unit)? {
-    val color = when (value) {
-        "Expired","Unpaid","Stolen","Not Paid","Yes" -> Color(0xFFfae3e5)
-        "Safe","Valid","Paid" ,"No"-> Color(0xFFdcf2ed)
-        else -> Color.Gray
+
+fun getStatusBadge(value: String, onClick: () -> Unit): @Composable (() -> Unit)? {
+    val bgColor = when (value) {
+        "Expired", "Unpaid", "Stolen", "Not Paid", "Yes" -> Color(0xFFfae3e5)
+        "Safe", "Valid", "Paid", "No" -> Color(0xFFdcf2ed)
+        else -> Color.LightGray
     }
-    return {Box(
-        modifier = Modifier
-            .padding(start = 8.dp)
-            .background(color, shape = RoundedCornerShape(8.dp))
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-    ) {
-        Text(value, color = if(value in listOf("Expired","Unpaid","Stolen","Not Paid","Yes"))  Color(0xFFef4444) else Color(0xFF10d981), fontSize = 12.sp)
-    }}
+    val textColor = when (value) {
+        "Expired", "Unpaid", "Stolen", "Not Paid", "Yes" -> Color(0xFFef4444)
+        "Safe", "Valid", "Paid", "No" -> Color(0xFF10D97F)
+        else -> Color.DarkGray
+    }
+    return {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable { onClick() }
+                .background(bgColor)
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+        ) {
+            Text(text = value, color = textColor, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        }
+    }
 }
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun buildCarInfoString(car: Car): String {
+    return """
+        Owner: ${car.owner ?: "Unknown"}
+        License Number: ${car.licenseNumber}
+        Make & Model: ${car.makeAndModel ?: "Unknown"}
+        Color: ${car.color ?: "Unknown"}
+        Address: ${car.address ?: "Unknown"}
+        Driver’s License: ${car.driverLicense ?: "Unknown"}
+        Insurance Status: ${getValidityStatus(car.insuranceEnd)}
+        Inspection Status: ${getValidityStatus(car.inspectionEnd)}
+        Tax Status: ${car.taxPaid ?: "Unknown"}
+        Stolen Car: ${car.stolenCar}
+    """.trimIndent()
+}
+
+
+

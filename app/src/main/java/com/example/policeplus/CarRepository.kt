@@ -10,7 +10,7 @@ class CarRepository @Inject constructor(private val carDao: CarDao) {
         carDao.insertCar(car)
     }
 
-    suspend fun deleteCar(car: CarEntity) {
+    suspend fun deleteCar(car: String) {
         carDao.deleteCar(car)
     }
 

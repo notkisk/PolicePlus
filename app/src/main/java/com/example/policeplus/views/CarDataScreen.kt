@@ -20,6 +20,7 @@ import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,6 +41,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 
+// Improved Car Data Screen with better UI/UX styling
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun CarDataScreen(viewModel: CarViewModel) {
@@ -47,31 +49,36 @@ fun CarDataScreen(viewModel: CarViewModel) {
     val isLoading by viewModel.isLoading.observeAsState(false)
     val error by viewModel.error.observeAsState("")
 
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .background(Color(0xFFF9F9F9))
+            .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(Modifier.height(50.dp))
+        Spacer(Modifier.height(40.dp))
+
         Text(
-            "Car Data",
-            color = Color(0xFF5B5B5B),
-            textAlign = TextAlign.Center,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
+            text = "Vehicle Details",
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF2D2D2D),
+            textAlign = TextAlign.Center
         )
-        Spacer(Modifier.height(30.dp))
+
+        Spacer(Modifier.height(24.dp))
 
         if (isLoading) {
             CircularProgressIndicator(color = PolicePlusBlue)
         } else {
             car?.let {
-                ScanDetails(car = it)
-            } ?: Text( if (error.isNotBlank()) error else "No data available", color = Color.Gray, fontSize = 16.sp)
+                ScanDetails(it)
+            } ?: Text(
+                text = if (error.isNotBlank()) error else "No data available",
+                fontSize = 16.sp,
+                color = Color.Gray
+            )
         }
-
     }
 }
 
@@ -79,7 +86,6 @@ fun CarDataScreen(viewModel: CarViewModel) {
 @Composable
 fun ScanDetails(car: Car) {
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-
     fun formatDate(dateString: String?): String {
         return dateString?.let {
             try {
@@ -90,25 +96,15 @@ fun ScanDetails(car: Car) {
         } ?: "Unknown"
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        LazyColumn {items(1){
-            VehicleInfoSection(car)
-            Spacer(modifier = Modifier.height(16.dp))
-            OwnerInfoSection(car)
-            Spacer(modifier = Modifier.height(16.dp))
-            RegistrationStatusSection(car, ::formatDate)
-            if (car.stolenCar == "Yes") {
-                Spacer(modifier = Modifier.height(20.dp))
-                StolenCarAlert()
-            }
-        }
-
-        }
-
+        item { VehicleInfoSection(car) }
+        item { OwnerInfoSection(car) }
+        item { RegistrationStatusSection(car, ::formatDate) }
+        if (car.stolenCar == "Yes") item { StolenCarAlert() }
+        item { Spacer(modifier = Modifier.height(16.dp)) }
     }
 }
 
@@ -117,18 +113,13 @@ fun VehicleInfoSection(car: Car) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
+        elevation = CardDefaults.cardElevation(6.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text("Vehicle Information", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black)
-
-            InfoRow("Make & Model:", car.makeAndModel?:"Unknown")
-            InfoRow("Color:", car.color?:"Unknown")
-
+        Column(modifier = Modifier.padding(16.dp)) {
+            SectionHeader("🧾 Vehicle Info")
+            InfoRow("Make & Model:", car.makeAndModel ?: "Unknown")
+            InfoRow("Color:", car.color ?: "Unknown")
         }
     }
 }
@@ -138,22 +129,17 @@ fun OwnerInfoSection(car: Car) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
+        elevation = CardDefaults.cardElevation(6.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text("Owner", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black)
-
+        Column(modifier = Modifier.padding(16.dp)) {
+            SectionHeader("👤 Owner Info")
             InfoRow("Name:", car.owner ?: "Unknown")
-            InfoRow("Address:", car.address?: "Unknown")
-            InfoRow("Driver's License:", car.driverLicense?: "Unknown")
+            InfoRow("Address:", car.address ?: "Unknown")
+            InfoRow("Driver's License:", car.driverLicense ?: "Unknown")
         }
     }
 }
-
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -161,71 +147,84 @@ fun RegistrationStatusSection(car: Car, formatDate: (String?) -> String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
+        elevation = CardDefaults.cardElevation(6.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text("Registration Status", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black)
-
+        Column(modifier = Modifier.padding(16.dp)) {
+            SectionHeader("🛡️ Registration Info")
             InfoRow("Insurance:", formatDate(car.insuranceEnd), getInsuranceStatus(car.insuranceEnd))
             InfoRow("Inspection:", formatDate(car.inspectionEnd), getInspectionStatus(car.inspectionEnd))
-            InfoRow("Tax Status:", "", if (car.taxPaid == "Paid") "Paid" else "Unpaid")
-            InfoRow("Stolen Car:", "", if (car.stolenCar == "Yes") "Stolen" else "Safe")
+            InfoRow("Tax Status:", car.taxPaid ?: "Unknown", if (car.taxPaid == "Paid") "Paid" else "Unpaid")
+            InfoRow("Stolen Car:", car.stolenCar, if (car.stolenCar == "Yes") "Stolen" else "Safe")
         }
     }
 }
 
 @Composable
-fun InfoRow( label: String, value: String, status: String? = null) {
+fun SectionHeader(title: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(title, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black)
+    }
+    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 1.dp, color = Color(0xFFE0E0E0))
+}
+
+@Composable
+fun InfoRow(label: String, value: String, status: String? = null) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-
-        Text(label, color = Color.Gray, fontWeight = FontWeight.Normal, fontSize = 14.sp)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(value, color = Color.Gray, fontSize = 16.sp, textAlign = TextAlign.Start)
-            status?.let { BadgeStatus(it) }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(label, color = Color.Gray, fontSize = 13.sp)
+            Text(value, fontSize = 14.sp, color = Color.Black)
+        }
+        status?.let {
+            BadgeStatus(it)
         }
     }
 }
 
 @Composable
 fun BadgeStatus(status: String) {
-    val color = when (status) {
-        "Expired","Unpaid","Stolen" -> Color(0xFFfae3e5)
-        "Safe","Valid","Paid" -> Color(0xFFdcf2ed)
-        else -> Color.Gray
+    val bgColor = when (status) {
+        "Expired", "Unpaid", "Stolen" -> Color(0xFFfae3e5)
+        "Safe", "Valid", "Paid" -> Color(0xFFdcf2ed)
+        else -> Color.LightGray
+    }
+    val textColor = when (status) {
+        "Expired", "Unpaid", "Stolen" -> Color(0xFFef4444)
+        "Safe", "Valid", "Paid" -> Color(0xFF10d981)
+        else -> Color.DarkGray
     }
     Box(
         modifier = Modifier
             .padding(start = 8.dp)
-            .background(color, shape = RoundedCornerShape(8.dp))
+            .background(bgColor, RoundedCornerShape(8.dp))
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
-        Text(status, color = if(status in listOf("Expired","Unpaid","Stolen"))  Color(0xFFef4444) else Color(0xFF10d981), fontSize = 12.sp)
+        Text(status, color = textColor, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 fun getInsuranceStatus(insuranceEnd: String?): String {
     return insuranceEnd?.let {
-        val expiryDate = Instant.parse(it).atZone(ZoneId.of("UTC")).toLocalDate()
-        if (expiryDate.isBefore(LocalDate.now())) "Expired" else "Valid"
+        val expiry = Instant.parse(it).atZone(ZoneId.of("UTC")).toLocalDate()
+        if (expiry.isBefore(LocalDate.now())) "Expired" else "Valid"
     } ?: "Unknown"
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 fun getInspectionStatus(inspectionEnd: String?): String {
     return inspectionEnd?.let {
-        val expiryDate = Instant.parse(it).atZone(ZoneId.of("UTC")).toLocalDate()
-        if (expiryDate.isBefore(LocalDate.now())) "Expired" else "Valid"
+        val expiry = Instant.parse(it).atZone(ZoneId.of("UTC")).toLocalDate()
+        if (expiry.isBefore(LocalDate.now())) "Expired" else "Valid"
     } ?: "Unknown"
 }
+
 @Composable
 fun StolenCarAlert() {
     Card(
@@ -238,17 +237,12 @@ fun StolenCarAlert() {
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(Icons.Outlined.Warning, contentDescription = "", tint = Color.White)
-            Text(
-                text = "Stolen Car Alert",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = Color.White
-            )
+            Icon(Icons.Outlined.Warning, contentDescription = null, tint = Color.White)
+            Text("Stolen Car Alert", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "This car is reported as stolen! Please follow department protocols for handling stolen vehicles.",
-                fontSize = 16.sp,
+                "This car is reported as stolen. Follow department protocols immediately.",
+                fontSize = 14.sp,
                 color = Color.White,
                 textAlign = TextAlign.Center
             )

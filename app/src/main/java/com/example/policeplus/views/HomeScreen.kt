@@ -46,6 +46,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.policeplus.R
 import com.example.policeplus.models.Car
 import com.example.policeplus.toEntity
@@ -57,7 +58,7 @@ import com.example.policeplus.views.components.RecentScanCard
 @RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("SuspiciousIndentation")
 @Composable
-fun HomeScreen(viewModel: CarViewModel, onSearch: () -> Unit) {
+fun HomeScreen(viewModel: CarViewModel, onSearch: () -> Unit,navController:NavController) {
 
 
     LaunchedEffect(Unit) {
@@ -76,7 +77,7 @@ fun HomeScreen(viewModel: CarViewModel, onSearch: () -> Unit) {
             painter = painterResource(R.drawable.logo),
             contentDescription = "PolicePlus Logo",
             modifier = Modifier
-                .size(138.dp)
+                .size(100.dp)
                 .align(Alignment.CenterHorizontally)
         )
 
@@ -141,7 +142,7 @@ fun HomeScreen(viewModel: CarViewModel, onSearch: () -> Unit) {
 
             LazyColumn {
                 items(recentScans) { car ->
-                    RecentScanCard(car)
+                    RecentScanCard(car,navController,onDelete = { viewModel.deleteACar(car) })
                     Spacer(modifier = Modifier.height(27.dp))
                 }
             }

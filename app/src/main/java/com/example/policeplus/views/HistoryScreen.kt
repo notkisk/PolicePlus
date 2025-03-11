@@ -27,17 +27,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.policeplus.R
 import com.example.policeplus.toEntity
 import com.example.policeplus.ui.theme.PolicePlusBlue
 import com.example.policeplus.ui.theme.Titles
+import com.example.policeplus.views.components.HistoryScanCard
 import com.example.policeplus.views.components.RecentScanCard
 
 
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun HistoryScreen(viewModel: CarViewModel) {
+fun HistoryScreen(viewModel: CarViewModel,navController: NavController) {
     LaunchedEffect(Unit) {
         viewModel.loadUserAndHistory()
     }
@@ -131,16 +133,20 @@ fun HistoryScreen(viewModel: CarViewModel) {
             }
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
                 contentPadding = PaddingValues(bottom = 80.dp)
-            ) {
+            )
+            {
                 items(filteredHistory) { carEntity ->
                     AnimatedVisibility(
                         visible = true,
                         enter = fadeIn(animationSpec = tween(500)) + slideInVertically(),
                         exit = fadeOut()
                     ) {
-                        RecentScanCard(carEntity)
+                        HistoryScanCard(carEntity,navController
+                        ) { viewModel.deleteACar(carEntity) }
                     }
                     Spacer(modifier = Modifier.height(20.dp))
                 }

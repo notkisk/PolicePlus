@@ -93,7 +93,7 @@ fun MainScreen(navController: NavHostController = rememberNavController()) {
             exitTransition = { ExitTransition.None },
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("home") { HomeScreen(carViewModel,onSearch = { navController.navigate("data") })  }
+            composable("home") { HomeScreen(carViewModel,onSearch = { navController.navigate("data") },navController)  }
             composable("data") { CarDataScreen(carViewModel) }
             composable("scan") { ScanScreen({ navController.popBackStack() }, { navController.navigate("data") }, carViewModel) }
             composable("profile") { ProfileScreen(userViewModel, onLogout = {
@@ -101,10 +101,12 @@ fun MainScreen(navController: NavHostController = rememberNavController()) {
                     popUpTo("home") { inclusive = true }  // ✅ Clear backstack on logout
                 }
                 userViewModel.logout()
-            }) }
-            composable("history") { HistoryScreen(carViewModel) }
+            },navController) }
+            composable("history") { HistoryScreen(carViewModel,navController) }
             composable("register") { RegisterScreen(navController, userViewModel) }
             composable("login") { LoginScreen(navController, userViewModel) }
+            composable("about") { AboutScreen({navController.popBackStack()}) }
+
         }
     }
 }

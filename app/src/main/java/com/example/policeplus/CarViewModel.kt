@@ -4,11 +4,8 @@ import RetrofitInstance.api
 import UserPreferences
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
 import com.example.policeplus.models.CarEntity
-import com.example.policeplus.CarRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
@@ -92,6 +89,13 @@ class CarViewModel @Inject constructor(
     private fun insert(car: CarEntity) = viewModelScope.launch {
         repository.insertCar(car)
     }
+
+    fun deleteACar(carToDelete:Car){
+        viewModelScope.launch {
+            _carHistory.value = _carHistory.value.filter { it.scanDate != carToDelete.scanDate }
+            repository.deleteCar(carToDelete.scanDate.toString())
+        }
+    }
 }
 fun Car.toEntity(userEmail: String): CarEntity {
     return CarEntity(
@@ -130,4 +134,6 @@ fun CarEntity.toCar(): Car {
         scanDate = this.scanDate
     )
 }
+
+
 
