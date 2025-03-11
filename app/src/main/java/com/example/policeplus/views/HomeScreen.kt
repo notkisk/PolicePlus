@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.policeplus.R
+import com.example.policeplus.UserViewModel
 import com.example.policeplus.models.Car
 import com.example.policeplus.toEntity
 import com.example.policeplus.ui.theme.InterFont
@@ -58,7 +59,7 @@ import com.example.policeplus.views.components.RecentScanCard
 @RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("SuspiciousIndentation")
 @Composable
-fun HomeScreen(viewModel: CarViewModel, onSearch: () -> Unit,navController:NavController) {
+fun HomeScreen(viewModel: CarViewModel, onSearch: () -> Unit,navController:NavController,userViewModel: UserViewModel) {
 
 
     LaunchedEffect(Unit) {
@@ -83,11 +84,12 @@ fun HomeScreen(viewModel: CarViewModel, onSearch: () -> Unit,navController:NavCo
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        val officerName = userViewModel.localUser.value?.name?.split(" ")?.first()
         // Welcome Message
         Text(
-            text = "Welcome, Officer Ali! 👋",
+            text = "Welcome, Officer ${officerName}! 👋",
             fontFamily = InterFont,
-            fontSize = 20.sp, color = Titles, fontWeight = FontWeight.Medium
+            fontSize = 20.sp, color = Titles, fontWeight = FontWeight.Medium, maxLines = 1
         )
 
         Spacer(modifier = Modifier.height(16.dp))

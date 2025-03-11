@@ -99,9 +99,8 @@ fun HistoryScreen(viewModel: CarViewModel, navController: NavController) {
             label = { Text("Search by Plate or Owner", fontFamily = InterFont, color = Color(0xFFABABAB))  },
             leadingIcon = {
                 Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search Icon",
-                    tint = PolicePlusBlue
+                    painter = painterResource(R.drawable.search),
+                    contentDescription = "Search Icon", modifier = Modifier.size(20.dp), tint = Color(0xFF7C7C7C)
                 )
             },
             modifier = Modifier.fillMaxWidth(),

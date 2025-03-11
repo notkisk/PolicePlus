@@ -93,7 +93,7 @@ fun MainScreen(navController: NavHostController = rememberNavController()) {
             exitTransition = { ExitTransition.None },
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("home") { HomeScreen(carViewModel,onSearch = { navController.navigate("data") },navController)  }
+            composable("home") { HomeScreen(carViewModel,onSearch = { navController.navigate("data") },navController,userViewModel)  }
             composable("data") { CarDataScreen(carViewModel) }
             composable("scan") { ScanScreen({ navController.popBackStack() }, { navController.navigate("data") }, carViewModel) }
             composable("profile") { ProfileScreen(userViewModel, onLogout = {
