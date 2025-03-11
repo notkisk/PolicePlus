@@ -8,6 +8,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,7 +25,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
@@ -40,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -179,8 +186,65 @@ fun HomeScreen(viewModel: CarViewModel, onSearch: () -> Unit,navController:NavCo
                     fontWeight = FontWeight.Bold
                 )
             }
+
+
         }
     }
 
+Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd){
+
+    SpeedDialFab()
 
 }
+}
+
+
+
+@Composable
+fun SpeedDialFab() {
+    var isExpanded by remember{ mutableStateOf(false) }
+    Box(modifier = Modifier.fillMaxSize()){
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.End,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 80.dp)
+        )
+
+        {
+            if(isExpanded){
+                MiniFab(icon= Icons.Default.Edit, label = "Create A Ticket"){
+
+                    isExpanded=false
+                }
+                MiniFab(icon= Icons.Default.Warning, label = "Report A Car"){
+                    isExpanded=false
+                }
+
+            }
+            FloatingActionButton(
+                onClick = { isExpanded=!isExpanded },
+                containerColor = PolicePlusBlue,
+                contentColor = Color.White,
+                modifier = Modifier.size(90.dp).padding(25.dp)
+            ) {
+                Text("+")
+            }
+
+        }
+
+    }
+
+}
+
+@Composable
+fun MiniFab(icon: ImageVector, label:String, onClick:()->Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End){
+        Text(text=label,modifier=Modifier.padding(end=8.dp))
+        FloatingActionButton(onClick = onClick, modifier = Modifier.size(40.dp), containerColor = MaterialTheme.colorScheme.secondary) {
+            Icon(icon, contentDescription = label)
+        }
+    }
+}
+
+
