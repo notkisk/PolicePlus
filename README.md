@@ -61,6 +61,7 @@
 <h2>📌 Future Improvements</h2>
 <ul>
 <li>🧑‍💻 <strong>Biometric Authentication</strong> (Fingerprint/Face recognition)</li>
+<li>🧑‍💻 <strong>Filing a Ticket</strong> </li>
 <li>🔔 <strong>Real-time Alerts</strong> for stolen vehicles</li>
 <li>🌍 <strong>GPS Tracking</strong> of scanned vehicles</li>
 <li>📊 <strong>Admin Dashboard</strong> for data analytics</li>
