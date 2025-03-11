@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.policeplus.R
 import com.example.policeplus.toEntity
+import com.example.policeplus.ui.theme.InterFont
 import com.example.policeplus.ui.theme.PolicePlusBlue
 import com.example.policeplus.ui.theme.Titles
 import com.example.policeplus.views.components.HistoryScanCard
@@ -95,7 +96,7 @@ fun HistoryScreen(viewModel: CarViewModel, navController: NavController) {
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            label = { Text("Search by Plate or Owner") },
+            label = { Text("Search by Plate or Owner", fontFamily = InterFont, color = Color(0xFFABABAB))  },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
