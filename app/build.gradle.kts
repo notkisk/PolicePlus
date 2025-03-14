@@ -64,6 +64,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose.v280)
     implementation(libs.places)
     implementation(libs.androidx.datastore.core.android)
+    implementation("com.google.mlkit:object-detection:17.0.2")
+    implementation(libs.generativeai)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -73,6 +75,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation (libs.androidx.core.splashscreen)
     implementation(libs.coil.compose)
+
 
     implementation (libs.androidx.camera.core.v130)
     implementation (libs.androidx.camera.camera2)
@@ -118,6 +121,7 @@ dependencies {
 
     // optional - RxJava3 support
     implementation("androidx.datastore:datastore-preferences-rxjava3:1.1.3")
+
 
 }
 
