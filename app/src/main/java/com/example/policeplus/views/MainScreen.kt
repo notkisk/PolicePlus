@@ -99,7 +99,7 @@ fun MainScreen(navController: NavHostController = rememberNavController()) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = startDestination,  // ✅ Conditionally set start destination
+            startDestination = startDestination,
             enterTransition = { EnterTransition.None },
             exitTransition = { ExitTransition.None },
             modifier = Modifier.padding(innerPadding)
@@ -117,6 +117,7 @@ fun MainScreen(navController: NavHostController = rememberNavController()) {
             composable("register") { RegisterScreen(navController, userViewModel) }
             composable("login") { LoginScreen(navController, userViewModel) }
             composable("about") { AboutScreen({navController.popBackStack()}) }
+
         }
     }
 }

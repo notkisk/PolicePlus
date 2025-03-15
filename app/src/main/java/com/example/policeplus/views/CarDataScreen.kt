@@ -3,6 +3,12 @@ package com.example.policeplus.views
 import com.example.policeplus.CarViewModel
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,13 +34,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.policeplus.models.Car
 import com.example.policeplus.ui.theme.PolicePlusBlue
+import com.example.policeplus.views.components.ShimmerLoadingCard
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -69,7 +79,46 @@ fun CarDataScreen(viewModel: CarViewModel) {
         Spacer(Modifier.height(24.dp))
 
         if (isLoading) {
-            CircularProgressIndicator(color = PolicePlusBlue)
+            //CircularProgressIndicator(color = PolicePlusBlue)
+
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {     Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(6.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        ShimmerLoadingCard(120.dp,2)
+                    }
+                } }
+                item {   Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(6.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        ShimmerLoadingCard(180.dp,3)
+                    }
+                } }
+                item {   Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(6.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        ShimmerLoadingCard(200.dp,4)
+                    }
+                } }
+                item { Spacer(modifier = Modifier.height(16.dp)) }
+            }
+
         } else {
             car?.let {
                 ScanDetails(it)
@@ -110,6 +159,7 @@ fun ScanDetails(car: Car) {
 
 @Composable
 fun VehicleInfoSection(car: Car) {
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -249,3 +299,6 @@ fun StolenCarAlert() {
         }
     }
 }
+
+
+
