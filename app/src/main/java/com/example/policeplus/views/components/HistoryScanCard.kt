@@ -33,6 +33,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,7 +56,10 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.policeplus.R
 import com.example.policeplus.models.Car
+import com.example.policeplus.models.Ticket
 import com.example.policeplus.models.User
+import com.example.policeplus.views.InfoRow
+import com.example.policeplus.views.SectionHeader
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -298,7 +302,7 @@ fun HistoryScanCard(car: Car, navController: NavController, onDelete:()->Unit) {
                 }
             }
         }
-
+        //TicketsSection(car, ::formatDateDisplay)
         DropdownMenu(
             expanded = showMenu,
             onDismissRequest = { showMenu = false }
@@ -340,5 +344,40 @@ fun HistoryScanCard(car: Car, navController: NavController, onDelete:()->Unit) {
             onDismiss = { showDialog = false },
             navController = navController
         )
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun TicketsSection(car: Car, formatDate: (String?) -> String) {
+    if (car.tickets.isEmpty()) return // No tickets, skip section
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(6.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            SectionHeader("🎫 Tickets")
+
+            car.tickets.forEachIndexed { index, ticket ->
+                TicketItem(ticket, formatDate)
+
+                // Divider between tickets
+                if (index != car.tickets.lastIndex) {
+                    HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 1.dp, modifier = Modifier.padding(vertical = 8.dp))
+                }
+            }
+        }
+    }
+}
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun TicketItem(ticket: Ticket, formatDate: (String?) -> String) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+        InfoRow("Ticket Type", ticket.ticketType)
+        InfoRow("Details", ticket.details)
+        InfoRow("Issue Date", formatDate(ticket.ticketDate))
     }
 }

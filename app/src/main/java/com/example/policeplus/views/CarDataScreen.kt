@@ -26,6 +26,7 @@ import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.policeplus.models.Car
+import com.example.policeplus.models.Ticket
 import com.example.policeplus.ui.theme.PolicePlusBlue
 import com.example.policeplus.views.components.ShimmerLoadingCard
 import java.time.Instant
@@ -152,6 +154,7 @@ fun ScanDetails(car: Car) {
         item { VehicleInfoSection(car) }
         item { OwnerInfoSection(car) }
         item { RegistrationStatusSection(car, ::formatDate) }
+        item{TicketsSection(car, ::formatDate)}
         if (car.stolenCar == "Yes") item { StolenCarAlert() }
         item { Spacer(modifier = Modifier.height(16.dp)) }
     }
@@ -209,6 +212,42 @@ fun RegistrationStatusSection(car: Car, formatDate: (String?) -> String) {
         }
     }
 }
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun TicketsSection(car: Car, formatDate: (String?) -> String) {
+    if (car.tickets.isEmpty()) return // No tickets, skip section
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(6.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            SectionHeader("🎫 Tickets")
+
+            car.tickets.forEachIndexed { index, ticket ->
+                TicketItem(ticket, formatDate)
+
+                // Divider between tickets
+                if (index != car.tickets.lastIndex) {
+                    HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 1.dp, modifier = Modifier.padding(vertical = 8.dp))
+                }
+            }
+        }
+    }
+}
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun TicketItem(ticket: Ticket, formatDate: (String?) -> String) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+        InfoRow("Ticket Type", ticket.ticketType)
+        InfoRow("Details", ticket.details)
+        InfoRow("Issue Date", formatDate(ticket.ticketDate))
+    }
+}
+
 
 @Composable
 fun SectionHeader(title: String) {

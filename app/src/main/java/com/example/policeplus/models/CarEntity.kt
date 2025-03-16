@@ -19,5 +19,6 @@ data class CarEntity(
     @ColumnInfo(name = "driver_license") val driverLicense: String,
     @ColumnInfo(name = "address") val address: String,
     @ColumnInfo(name = "scan_date") val scanDate: Long,
-    @ColumnInfo(name = "user_email") val userEmail: String // ✅ Added
+    @ColumnInfo(name = "user_email") val userEmail: String,
+
 )

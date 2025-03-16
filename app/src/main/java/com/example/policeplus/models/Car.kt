@@ -15,7 +15,15 @@ data class Car(
     @SerializedName("color") val color: String,
     @SerializedName("driver_license") val driverLicense: String,
     @SerializedName("address") val address: String,
-    val scanDate: Long
+    val scanDate: Long,
+    @SerializedName("tickets") val tickets: List<Ticket> = emptyList()
 
 
+)
+
+data class Ticket(
+    @SerializedName("driver_license") val driverLicense: String,
+    @SerializedName("issue_date") val ticketDate: String,
+    @SerializedName("ticket_type") val ticketType: String,
+    @SerializedName("ticket_details") val details: String
 )

@@ -75,6 +75,7 @@ class CarViewModel @Inject constructor(
                 val response = api.getCarByPlate(licensePlate)
                 //delay(2000)
                 if (response.isSuccessful) {
+                    //Log.d("ticket", response.body()?.tickets?.get(0)?.ticketType.toString())
                     response.body()?.let { carData ->
                         _car.postValue(carData)
                         insert(carData.toEntity(userEmail)) // ✅ Save with correct user
@@ -159,7 +160,7 @@ fun Car.toEntity(userEmail: String): CarEntity {
         driverLicense = this.driverLicense,
         address = this.address,
         scanDate = System.currentTimeMillis(),
-        userEmail = userEmail
+        userEmail = userEmail,
     )
 }
 
