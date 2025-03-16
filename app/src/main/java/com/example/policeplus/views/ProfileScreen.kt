@@ -107,7 +107,7 @@ fun ProfileScreen(userViewModel: UserViewModel, onLogout: () -> Unit,navControll
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Image(
-                                painter = rememberAsyncImagePainter(user.officerImage),
+                                painter = if(user.officerImage?.isBlank() == false)rememberAsyncImagePainter(user.officerImage)else painterResource(R.drawable.user),
                                 contentDescription = "Profile Picture",
                                 modifier = Modifier
                                     .size(120.dp)
