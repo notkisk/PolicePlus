@@ -1,32 +1,42 @@
-
 package com.example.policeplus.views
 
-import TicketDraftViewModel
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.navigation.NavController
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.policeplus.CarViewModel
-import com.example.policeplus.Ticket
+import com.example.policeplus.StolenReport
 import com.example.policeplus.UserViewModel
 import com.example.policeplus.ui.theme.PolicePlusBlue
 import com.example.policeplus.ui.theme.Titles
@@ -34,30 +44,19 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TicketFormDrawer(
+fun ReportStolenCarDrawer(
     onClose: () -> Unit,
-    resumeDraft: Boolean = false,
-    draftViewModel: TicketDraftViewModel = viewModel(),carViewModel: CarViewModel,userViewModel: UserViewModel
+    carViewModel: CarViewModel,
+    userViewModel: UserViewModel
 ) {
-    var licenseNumber by remember { mutableStateOf(draftViewModel.licenseNumber) }
-    var selectedFamily by remember { mutableStateOf(draftViewModel.selectedFamily) }
-    var ticketDetails by remember { mutableStateOf(draftViewModel.ticketDetails) }
+    var licenseNumber by remember { mutableStateOf("") }
+    var stolenStatus by remember { mutableStateOf("") }
+    var details by remember { mutableStateOf("") }
     val isLoading by carViewModel.isTicketSubmissionLoading.collectAsState()
-    val ticketFamilies = listOf(
-        "Speeding", "Parking Violation", "Reckless Driving", "Expired License",
-        "Expired Insurance/Inspection", "Unpaid Tax", "No Seatbelt", "Other"
-    )
-
-    var dropdownExpanded by remember { mutableStateOf(false) }
-    val context = LocalContext.current
+    val options = listOf("Yes", "No")
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
-
-    LaunchedEffect(licenseNumber, selectedFamily, ticketDetails) {
-        draftViewModel.licenseNumber = licenseNumber
-        draftViewModel.selectedFamily = selectedFamily
-        draftViewModel.ticketDetails = ticketDetails
-    }
+    var dropdownExpanded by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = { onClose() },
@@ -71,7 +70,7 @@ fun TicketFormDrawer(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Issue a Ticket", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Titles)
+            Text("Report Stolen Car", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Titles)
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
@@ -90,9 +89,9 @@ fun TicketFormDrawer(
                 onExpandedChange = { dropdownExpanded = !dropdownExpanded }
             ) {
                 OutlinedTextField(
-                    value = selectedFamily,
+                    value = stolenStatus,
                     onValueChange = {},
-                    label = { Text("Ticket Type") },
+                    label = { Text("Is Car Stolen?") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded) },
                     readOnly = true,
                     shape = RoundedCornerShape(12.dp),
@@ -102,11 +101,11 @@ fun TicketFormDrawer(
                     expanded = dropdownExpanded,
                     onDismissRequest = { dropdownExpanded = false }
                 ) {
-                    ticketFamilies.forEach { item ->
+                    options.forEach { option ->
                         DropdownMenuItem(
-                            text = { Text(item) },
+                            text = { Text(option) },
                             onClick = {
-                                selectedFamily = item
+                                stolenStatus = option
                                 dropdownExpanded = false
                             }
                         )
@@ -117,8 +116,8 @@ fun TicketFormDrawer(
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
-                value = ticketDetails,
-                onValueChange = { ticketDetails = it },
+                value = details,
+                onValueChange = { details = it },
                 label = { Text("Details (Optional)") },
                 modifier = Modifier.fillMaxWidth().height(120.dp),
                 shape = RoundedCornerShape(12.dp),
@@ -129,27 +128,26 @@ fun TicketFormDrawer(
 
             Button(
                 onClick = {
-                    if (licenseNumber.isNotBlank() && selectedFamily.isNotBlank()) {
+                    if (licenseNumber.isNotBlank() && stolenStatus.isNotBlank()) {
                         coroutineScope.launch {
-
-                            val ticket = userViewModel.localUser.value?.let {
-                                Ticket(
-                                    driver_license = licenseNumber,
-                                    ticket_type = selectedFamily,
-                                    details = ticketDetails,
+                            val stolenCar = userViewModel.localUser.value?.let {
+                                StolenReport(
+                                    license_plate = licenseNumber,
+                                    stolen_status = stolenStatus,
+                                    details = details,
                                     officer_name = it.name,
-                                    officer_badge =it.badgeNumber
+                                    officer_badge = it.badgeNumber)
+                            }
+
+                            if (stolenCar != null) {
+                                carViewModel.reportStolenCar(
+                                    stolenCar
                                 )
                             }
-                            if (ticket != null) {
-                                carViewModel.submitTicket(ticket)
+                            if (!isLoading) {
+                                snackbarHostState.showSnackbar("✅ Report submitted successfully")
+                                onClose()
                             }
-                            if(isLoading){
-                            }else{
-                                snackbarHostState.showSnackbar("✅ Ticket submitted successfully")
-                                draftViewModel.clearDraft()
-                            }
-                            onClose()
                         }
                     } else {
                         coroutineScope.launch {
@@ -161,7 +159,7 @@ fun TicketFormDrawer(
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = PolicePlusBlue)
             ) {
-                Text("Submit Ticket", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text("Submit Report", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
 
             Spacer(modifier = Modifier.height(8.dp))

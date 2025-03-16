@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import android.app.Application
+import android.provider.SyncStateContract.Helpers.insert
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import com.example.policeplus.models.Car
 
@@ -32,6 +34,9 @@ class CarViewModel @Inject constructor(
 
     private val _isLoading = MutableLiveData(false)
     val isLoading: LiveData<Boolean> = _isLoading
+
+    private val _isTicketSubmissionLoading = MutableStateFlow<Boolean>(false)
+    val isTicketSubmissionLoading: StateFlow<Boolean> = _isTicketSubmissionLoading
 
     private val _error = MutableLiveData("")
     val error: LiveData<String> = _error
@@ -68,7 +73,7 @@ class CarViewModel @Inject constructor(
             _error.postValue("")
             try {
                 val response = api.getCarByPlate(licensePlate)
-                delay(2000)
+                //delay(2000)
                 if (response.isSuccessful) {
                     response.body()?.let { carData ->
                         _car.postValue(carData)
@@ -85,6 +90,48 @@ class CarViewModel @Inject constructor(
             }
         }
     }
+
+    fun submitTicket(ticket:Ticket){
+        viewModelScope.launch {
+            _isTicketSubmissionLoading.value = true
+            try {
+                val response =   api.submitTicket(ticket = ticket)
+                if(response.isSuccessful){
+                    _isTicketSubmissionLoading.value = false
+
+                    response.body()?.let {
+                        Log.d("Ticket",it.message)
+                    }
+
+                }
+            }catch (e:Exception){
+
+            }
+
+        }
+    }
+
+
+    fun reportStolenCar(stolenReport: StolenReport){
+        viewModelScope.launch {
+            _isTicketSubmissionLoading.value = true
+            try {
+                val response =   api.reportStolenCar( stolenReport,stolenReport.license_plate,stolenReport.stolen_status)
+                if(response.isSuccessful){
+                    _isTicketSubmissionLoading.value = false
+
+                    response.body()?.let {
+                        Log.d("Ticket",it.message)
+                    }
+
+                }
+            }catch (e:Exception){
+
+            }
+
+        }
+    }
+
 
     private fun insert(car: CarEntity) = viewModelScope.launch {
         repository.insertCar(car)

@@ -89,7 +89,7 @@ import com.example.policeplus.views.components.RecentScanCard
 @RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("SuspiciousIndentation")
 @Composable
-fun HomeScreen(viewModel: CarViewModel, onSearch: () -> Unit,navController:NavController,userViewModel: UserViewModel) {
+fun HomeScreen(viewModel: CarViewModel, onSearch: () -> Unit,navController:NavController,userViewModel: UserViewModel,draftViewModel:TicketDraftViewModel) {
 
 
     LaunchedEffect(Unit) {
@@ -215,7 +215,7 @@ fun HomeScreen(viewModel: CarViewModel, onSearch: () -> Unit,navController:NavCo
     }
 
 
-    SpeedDialFab(navController)
+    SpeedDialFab(navController,draftViewModel,viewModel,userViewModel)
 
 }
 
@@ -224,7 +224,8 @@ fun HomeScreen(viewModel: CarViewModel, onSearch: () -> Unit,navController:NavCo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SpeedDialFab(navController: NavController, draftViewModel: TicketDraftViewModel = viewModel()) {
+fun SpeedDialFab(navController: NavController, draftViewModel: TicketDraftViewModel = viewModel(),carViewModel:CarViewModel,userViewModel: UserViewModel) {
+
     var isExpanded by remember { mutableStateOf(false) }
     val transition = updateTransition(targetState = isExpanded, label = "FAB Transition")
 
@@ -237,6 +238,7 @@ fun SpeedDialFab(navController: NavController, draftViewModel: TicketDraftViewMo
     }
 
     var showTicketDrawer by remember { mutableStateOf(false) }
+    var showReportDrawer by remember { mutableStateOf(false) }
     var resumeDraft by remember { mutableStateOf(false) }
 
     Box(
@@ -273,6 +275,7 @@ fun SpeedDialFab(navController: NavController, draftViewModel: TicketDraftViewMo
                     }
                     MiniFab(icon = Icons.Default.Warning, label = "Report A Car") {
                         isExpanded = false
+                        showReportDrawer = true
                     }
                 }
             }
@@ -300,12 +303,28 @@ fun SpeedDialFab(navController: NavController, draftViewModel: TicketDraftViewMo
         TicketFormDrawer(
             onClose = { showTicketDrawer = false },
             resumeDraft = resumeDraft,
-            draftViewModel = draftViewModel
+            draftViewModel = draftViewModel,carViewModel = carViewModel,userViewModel
+        )
+    }
+    if (showReportDrawer) {
+        ReportStolenCarDrawer(
+            onClose = { showReportDrawer = false },
+           carViewModel = carViewModel,userViewModel
         )
     }
 
     if (draftViewModel.hasDraft && !showTicketDrawer) {
         Snackbar(
+            dismissAction = {
+                Text(
+                    text = "Dismiss",
+                    color = Color(0xFFE74F4F),
+                    modifier = Modifier.clickable {
+                        resumeDraft = false
+                        draftViewModel.clearDraft()
+                    }.padding(horizontal = 15.dp)
+                )
+            },
             action = {
                 Text(
                     text = "Resume",

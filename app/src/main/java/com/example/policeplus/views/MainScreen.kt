@@ -61,7 +61,7 @@ import com.example.policeplus.ui.theme.PolicePlusBlue
 fun MainScreen(navController: NavHostController = rememberNavController()) {
     val userViewModel: UserViewModel = hiltViewModel()
     val carViewModel: CarViewModel = hiltViewModel()
-    val ticketsDraftViewModel: TicketDraftViewModel = hiltViewModel()
+    val draftViewModel: TicketDraftViewModel = hiltViewModel()
 
     var isLoggedIn by remember { mutableStateOf<Boolean?>(null) }  // Holds login state
     val token by userViewModel.token.collectAsState()  // ✅ Properly collect the StateFlow
@@ -104,7 +104,7 @@ fun MainScreen(navController: NavHostController = rememberNavController()) {
             exitTransition = { ExitTransition.None },
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("home") { HomeScreen(carViewModel,onSearch = { navController.navigate("data") },navController,userViewModel)  }
+            composable("home") { HomeScreen(carViewModel,onSearch = { navController.navigate("data") },navController,userViewModel,draftViewModel)  }
             composable("data") { CarDataScreen(carViewModel) }
             composable("scan") { ScanScreen({ navController.popBackStack() }, { navController.navigate("data") }, carViewModel) }
             composable("profile") { ProfileScreen(userViewModel, onLogout = {
