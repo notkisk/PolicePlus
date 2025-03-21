@@ -1,66 +1,63 @@
 package com.example.policeplus.views
 
-import com.example.policeplus.CarViewModel
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Warning
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.policeplus.CarViewModel
+import com.example.policeplus.UserViewModel
 import com.example.policeplus.models.Car
 import com.example.policeplus.models.Ticket
-import com.example.policeplus.ui.theme.PolicePlusBlue
 import com.example.policeplus.views.components.ShimmerLoadingCard
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-
-// Improved Car Data Screen with better UI/UX styling
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun CarDataScreen(viewModel: CarViewModel) {
     val car by viewModel.car.observeAsState()
-    val isLoading by viewModel.isLoading.observeAsState(false)
-    val error by viewModel.error.observeAsState("")
+    val isLoading by viewModel.isLoading.observeAsState(initial = false)
+    val error by viewModel.error.observeAsState(initial = "")
+    val userViewModel: UserViewModel = hiltViewModel()
 
+    // Observe user and get license number (same as before)
+    val user by userViewModel.localUser.observeAsState()
+    val licenseNumber = remember(user) {
+        if (user?.userType != "police") {
+            user?.licenseNumber
+        } else {
+            null
+        }
+    }
+
+    // Use a remember-ed flag to track if we've fetched
+    var hasFetched by remember { mutableStateOf(false) }
+
+    LaunchedEffect(licenseNumber) { // Key is licenseNumber (could also be Unit)
+        if (licenseNumber != null && !hasFetched) {
+            viewModel.fetchCar(licenseNumber)
+            hasFetched = true // Set the flag to prevent future fetches
+        }
+    }
+
+    // ... rest of your composable ... (no changes needed here)
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -82,57 +79,64 @@ fun CarDataScreen(viewModel: CarViewModel) {
 
         if (isLoading) {
             //CircularProgressIndicator(color = PolicePlusBlue)
-
-
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                item {     Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(6.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        ShimmerLoadingCard(120.dp,2)
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(6.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            ShimmerLoadingCard(120.dp, 2)
+                        }
                     }
-                } }
-                item {   Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(6.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        ShimmerLoadingCard(180.dp,3)
+                }
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(6.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            ShimmerLoadingCard(180.dp, 3)
+                        }
                     }
-                } }
-                item {   Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(6.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        ShimmerLoadingCard(200.dp,4)
+                }
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(6.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            ShimmerLoadingCard(200.dp, 4)
+                        }
                     }
-                } }
+                }
                 item { Spacer(modifier = Modifier.height(16.dp)) }
             }
 
         } else {
-            car?.let {
-                ScanDetails(it)
-            } ?: Text(
-                text = if (error.isNotBlank()) error else "No data available",
-                fontSize = 16.sp,
-                color = Color.Gray
-            )
+            if (car != null) {  // More concise null check
+                ScanDetails(car!!) // Safe to use !! here because of the null check above
+            } else {
+                Text(
+                    text = error.ifBlank { "No data available" }, // More idiomatic
+                    fontSize = 16.sp,
+                    color = Color.Gray
+                )
+            }
         }
     }
 }
 
+// ... rest of your composables ... (They are well-structured and don't need changes)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ScanDetails(car: Car) {
@@ -338,6 +342,3 @@ fun StolenCarAlert() {
         }
     }
 }
-
-
-

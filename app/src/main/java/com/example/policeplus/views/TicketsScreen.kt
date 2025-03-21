@@ -2,15 +2,10 @@
 package com.example.policeplus.views
 
 import TicketDraftViewModel
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavController
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,7 +32,7 @@ import kotlinx.coroutines.launch
 fun TicketFormDrawer(
     onClose: () -> Unit,
     resumeDraft: Boolean = false,
-    draftViewModel: TicketDraftViewModel = viewModel(),carViewModel: CarViewModel,userViewModel: UserViewModel
+    draftViewModel: TicketDraftViewModel = viewModel(), carViewModel: CarViewModel, userViewModel: UserViewModel
 ) {
     var licenseNumber by remember { mutableStateOf(draftViewModel.licenseNumber) }
     var selectedFamily by remember { mutableStateOf(draftViewModel.selectedFamily) }

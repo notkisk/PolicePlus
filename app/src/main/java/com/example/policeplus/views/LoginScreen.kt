@@ -1,6 +1,10 @@
 package com.example.policeplus.views
 
+import PoliceRegistrationForm
+import ToggleButtonItem
+import UserRegistrationForm
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -22,7 +25,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,8 +49,49 @@ import com.example.policeplus.R
 import com.example.policeplus.UserViewModel
 import com.example.policeplus.ui.theme.PolicePlusBlue
 
+
+
+
 @Composable
 fun LoginScreen(navController: NavController, userViewModel: UserViewModel) {
+    var isPoliceLogin by remember { mutableStateOf(true) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.logo),
+            contentDescription = "Logo",
+            modifier = Modifier
+                .size(110.dp)
+                .padding(top = 32.dp, bottom = 16.dp)
+        )
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .clip(RoundedCornerShape(50))
+                .background(Color(0xFFF0F4F7))
+                .padding(4.dp)
+        ) {
+            ToggleButtonItem("Police", isPoliceLogin) { isPoliceLogin = true }
+            ToggleButtonItem("User", !isPoliceLogin) { isPoliceLogin = false }
+        }
+
+        Spacer(modifier = Modifier.height(34.dp))
+
+
+        LoginScreenReal(navController, userViewModel, isPoliceLogin)
+
+    }
+}
+
+
+@Composable
+fun LoginScreenReal(navController: NavController, userViewModel: UserViewModel, isPoliceLogin:Boolean) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -57,19 +100,10 @@ fun LoginScreen(navController: NavController, userViewModel: UserViewModel) {
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(start = 24.dp,end = 24.dp, bottom = 150.dp),
-        verticalArrangement = Arrangement.Center,
+            .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Logo
-        Image(
-            painter = painterResource(id = R.drawable.logo),
-            contentDescription = "Logo",
-            modifier = Modifier
-                .size(138.dp)
-                .padding(bottom = 24.dp)
-        )
+
 
         val textFieldModifier = Modifier
             .fillMaxWidth()
@@ -133,16 +167,29 @@ fun LoginScreen(navController: NavController, userViewModel: UserViewModel) {
             onClick = {
                 isLoading = true
                 val loginRequest = LoginRequest(email, password)
-
-                userViewModel.loginUser(loginRequest) { success, msg ->
-                    isLoading = false
-                    if (msg != null) {
-                        message = msg
+/////////////////////////////////
+                if(isPoliceLogin){
+                    userViewModel.loginUser(loginRequest) { success, msg ->
+                        isLoading = false
+                        if (msg != null) {
+                            message = msg
+                        }
+                        if (success) {
+                            navController.navigate("home")
+                        }
                     }
-                    if (success) {
-                        navController.navigate("home")
+                }else{
+                    userViewModel.loginNormal(loginRequest) { success, msg ->
+                        isLoading = false
+                        if (msg != null) {
+                            message = msg
+                        }
+                        if (success) {
+                            navController.navigate("home")
+                        }
                     }
                 }
+
             },
             modifier = Modifier
                 .fillMaxWidth()

@@ -7,21 +7,13 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -31,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -40,7 +33,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -93,7 +85,7 @@ fun MainScreen(navController: NavHostController = rememberNavController()) {
         bottomBar = {
             if (navController.currentBackStackEntryAsState().value?.destination?.route != "scan" && navController.currentBackStackEntryAsState().value?.destination?.route != "login"&&
                 navController.currentBackStackEntryAsState().value?.destination?.route != "register") {
-                BottomNavigationBar(navController)
+                BottomNavigationBar(navController,userViewModel)
             }
         }
     ) { innerPadding ->
@@ -127,12 +119,20 @@ fun MainScreen(navController: NavHostController = rememberNavController()) {
 
 
 @Composable
-fun BottomNavigationBar(navController: NavController) {
+fun BottomNavigationBar(navController: NavController,userViewModel: UserViewModel) {
+    val userType = userViewModel.localUser.observeAsState().value?.userType
+
     val navItemsList = listOf(
         NavItem("Home", painterResource(R.drawable.home), "home"),
         NavItem("Data", painterResource(R.drawable.details), "data"),
         NavItem("Scan", painterResource(R.drawable.scan), "scan"),
         NavItem("History", painterResource(R.drawable.history), "history"),
+        NavItem("Profile", painterResource(R.drawable.profile), "profile")
+
+    )
+
+    val navItemsListUser = listOf(
+        NavItem("Home", painterResource(R.drawable.home), "home"),
         NavItem("Profile", painterResource(R.drawable.profile), "profile")
 
     )
@@ -146,40 +146,69 @@ fun BottomNavigationBar(navController: NavController) {
             .shadow(15.dp, shape = RectangleShape)
     ) {
         NavigationBar(containerColor = Color.White, tonalElevation = 0.dp) {
-            navItemsList.forEachIndexed { index, item ->
-                val isSelected = currentRoute == item.route
-                NavigationBarItem(
-                    selected = isSelected,
-                    onClick = {
-                        if (item.route != currentRoute) {
-                            navController.navigate(item.route) {
-                                launchSingleTop = true
-                                restoreState = true
+            if(userType == "police"){
+                navItemsList.forEachIndexed { index, item ->
+                    val isSelected = currentRoute == item.route
+                    NavigationBarItem(
+                        selected = isSelected,
+                        onClick = {
+                            if (item.route != currentRoute) {
+                                navController.navigate(item.route) {
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
-                        }
-                    },
-                    icon = {
-                        if (index == 2) {
-                            Box(modifier = Modifier.size(60.dp)) {
-                                Icon(
-                                    painter = painterResource(R.drawable.scan),
-                                    contentDescription = item.label,
-                                    modifier = Modifier.size(60.dp),
-                                    tint = Color.Unspecified
-                                )
+                        },
+                        icon = {
+                            if (index == 2) {
+                                Box(modifier = Modifier.size(60.dp)) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.scan),
+                                        contentDescription = item.label,
+                                        modifier = Modifier.size(60.dp),
+                                        tint = Color.Unspecified
+                                    )
+                                }
+                            } else {
+                                Icon(item.icon, contentDescription = item.label, modifier = Modifier.size(24.dp))
                             }
-                        } else {
-                            Icon(item.icon, contentDescription = item.label, modifier = Modifier.size(24.dp))
-                        }
-                    },
-                    label = { Text(item.label) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = PolicePlusBlue,
-                        selectedTextColor = PolicePlusBlue,
-                        indicatorColor = Color.Transparent
+                        },
+                        label = { Text(item.label) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = PolicePlusBlue,
+                            selectedTextColor = PolicePlusBlue,
+                            indicatorColor = Color.Transparent
+                        )
                     )
-                )
+                }
+            }else{
+                navItemsListUser.forEachIndexed { index, item ->
+                    val isSelected = currentRoute == item.route
+                    NavigationBarItem(
+                        selected = isSelected,
+                        onClick = {
+                            if (item.route != currentRoute) {
+                                navController.navigate(item.route) {
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        },
+                        icon = {
+
+                                Icon(item.icon, contentDescription = item.label, modifier = Modifier.size(24.dp))
+
+                        },
+                        label = { Text(item.label) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = PolicePlusBlue,
+                            selectedTextColor = PolicePlusBlue,
+                            indicatorColor = Color.Transparent
+                        )
+                    )
+                }
             }
+
         }
     }
 }

@@ -12,5 +12,19 @@ data class User(
     @SerializedName("department")val department: String?,
     @SerializedName("badge_number")val badgeNumber: String,
     @SerializedName("cars_scanned")val carsScanned: Int,
-    @SerializedName("officer_image")val officerImage: String?
+    @SerializedName("officer_image")val officerImage: String?,
+    @SerializedName("userType")val userType: String, // "police" or "normal"
+    @SerializedName("license_number")val licenseNumber: String?,
+
+
+    )
+
+data class NormalUser(
+    @SerializedName("id")val id: Int,
+    @SerializedName("email")val email: String,
+    @SerializedName("password")val password: String,
+    @SerializedName("name")val name: String,
+    @SerializedName("license_number")val licenseNumber: String,
+
 )
+

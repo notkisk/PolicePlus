@@ -7,12 +7,10 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.policeplus.models.CarEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import android.app.Application
-import android.provider.SyncStateContract.Helpers.insert
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import com.example.policeplus.models.Car
@@ -78,7 +76,7 @@ class CarViewModel @Inject constructor(
                     //Log.d("ticket", response.body()?.tickets?.get(0)?.ticketType.toString())
                     response.body()?.let { carData ->
                         _car.postValue(carData)
-                        insert(carData.toEntity(userEmail)) // ✅ Save with correct user
+                       if(userPreferences.getUser()?.userType  =="police") insert(carData.toEntity(userEmail)) // ✅ Save with correct user
                     }
                 } else {
                     _error.postValue(response.message())
@@ -92,7 +90,7 @@ class CarViewModel @Inject constructor(
         }
     }
 
-    fun submitTicket(ticket:Ticket){
+    fun submitTicket(ticket: Ticket){
         viewModelScope.launch {
             _isTicketSubmissionLoading.value = true
             try {

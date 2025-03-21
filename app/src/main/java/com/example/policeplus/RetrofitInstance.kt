@@ -9,7 +9,6 @@ object RetrofitInstance {
     private const val BASE_URL = "https://policeplus-api.onrender.com"
 
 
-    // Token should be stored securely (e.g., in DataStore or SharedPreferences)
     var authToken: String? = null
 
     private val authInterceptor = Interceptor { chain ->
@@ -22,13 +21,13 @@ object RetrofitInstance {
     }
 
     private val client = OkHttpClient.Builder()
-        .addInterceptor(authInterceptor)  // Attach interceptor
+        .addInterceptor(authInterceptor)
         .build()
 
     val api: CarApiService by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .client(client)  // Use custom OkHttpClient
+            .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(CarApiService::class.java)

@@ -1,6 +1,8 @@
 package com.example.policeplus
 import com.example.policeplus.models.Car
+import com.example.policeplus.models.NormalUser
 import com.example.policeplus.models.User
+import com.example.policeplus.UserRegisterRequest
 import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Body
@@ -18,8 +20,14 @@ interface CarApiService {
     @POST("/register")
     suspend fun register(@Body user: RegisterRequest): Response<RegisterResponse>
 
+    @POST("/register/normal")
+    suspend fun normalRegister(@Body user: UserRegisterRequest): Response<RegisterResponse>
+
     @POST("/login")
     suspend fun login(@Body credentials: LoginRequest): Response<LoginResponse>
+
+    @POST("/login")
+    suspend fun normalLogin(@Body credentials: LoginRequest): Response<NormalLoginResponse>
 
     @POST("/ticket")
     suspend fun submitTicket(@Body ticket: Ticket): Response<TicketResponse>
@@ -54,6 +62,12 @@ data class LoginResponse(
     val token:String
 )
 
+data class NormalLoginResponse(
+    val message: String,
+    val user: NormalUser,
+    val token:String
+)
+
 
 data class TicketResponse(
     val message: String,
@@ -82,3 +96,5 @@ data class StolenReport(
     val officer_badge:String
 
 )
+
+data class UserRegisterRequest( val email: String,  val password: String, val name: String, val license_number : String)
