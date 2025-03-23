@@ -57,7 +57,6 @@ fun CarDataScreen(viewModel: CarViewModel) {
         }
     }
 
-    // ... rest of your composable ... (no changes needed here)
     Column(
         modifier = Modifier
             .fillMaxSize()
