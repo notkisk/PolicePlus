@@ -8,25 +8,20 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.example.policeplus.models.CarEntity
 
-
 @Dao
 interface CarDao {
-
-    @Query("SELECT * FROM car_table ORDER BY id DESC")
-    fun getAllCars(): LiveData<List<CarEntity>>
+    @Query("SELECT * FROM car_table WHERE user_email = :email ORDER BY id DESC")
+    fun getAllCarsByUser(email: String): LiveData<List<CarEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCar(car: CarEntity)
 
-    @Query("SELECT * FROM car_table WHERE user_email = :email ORDER BY id DESC")
-    fun getAllCarsByUser(email: String): LiveData<List<CarEntity>>
+    @Query("SELECT * FROM car_table WHERE license_plate = :license AND user_email = :userEmail")
+    fun getCarByLicense(license: String, userEmail: String): LiveData<CarEntity?>
 
-    @Query("SELECT * FROM car_table WHERE license_plate = :license")
-    fun getCarByLicense(license: String): LiveData<CarEntity?>
+    @Query("DELETE FROM car_table WHERE id = :id AND user_email = :userEmail")
+    suspend fun deleteCar(id: String, userEmail: String)
 
-    @Query("DELETE FROM car_table WHERE scan_date = :scanDate")
-    suspend fun deleteCar(scanDate: String)
-
-    @Query("DELETE FROM car_table")
-    suspend fun deleteAllCars()
+    @Query("DELETE FROM car_table WHERE user_email = :email")
+    suspend fun deleteAllUserCars(email: String)
 }

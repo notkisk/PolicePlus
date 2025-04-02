@@ -28,6 +28,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -197,11 +199,7 @@ fun ProfileScreen(userViewModel: UserViewModel, onLogout: () -> Unit, navControl
                                     painterResource(R.drawable.outline_settings_24),
                                     "App Settings"
                                 ) {
-                                    val intent =
-                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                            data = Uri.parse("package:" + context.packageName)
-                                        }
-                                    context.startActivity(intent)
+                                    navController.navigate("settings")
                                 }
 
                                 SettingsItem(
@@ -384,10 +382,7 @@ fun ProfileScreen(userViewModel: UserViewModel, onLogout: () -> Unit, navControl
                                 Spacer(modifier = Modifier.height(12.dp))
 
                                 SettingsItem(painterResource(R.drawable.outline_settings_24), "App Settings") {
-                                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                        data = Uri.parse("package:" + context.packageName)
-                                    }
-                                    context.startActivity(intent)
+                                    navController.navigate("settings")
                                 }
 
                                 SettingsItem(painterResource(R.drawable.outline_notifications_24), "Notifications") {
@@ -503,4 +498,3 @@ fun ProfileStat(title: String, value: String) {
     }
 
 }
-

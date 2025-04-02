@@ -18,6 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class UserViewModel @Inject constructor(
     private val repository: UserRepository,
+    private val carManager: CarManager,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -31,8 +32,8 @@ class UserViewModel @Inject constructor(
     // private val _profileData = MutableLiveData<LoginResponse>()
     // val profileData: LiveData<LoginResponse> get() = _profileData
 
-    // private val _normalProfileData = MutableLiveData<NormalLoginResponse>()
-    // val normalProfileData: LiveData<NormalLoginResponse> get() = _normalProfileData
+     private val _normalProfileData = MutableLiveData<NormalLoginResponse>()
+     val normalProfileData: LiveData<NormalLoginResponse> get() = _normalProfileData
 
     private val _localUser = MutableLiveData<User?>() // Holds ALL user data (police or normal)
     val localUser: LiveData<User?> get() = _localUser
@@ -140,6 +141,7 @@ class UserViewModel @Inject constructor(
             val user = userPreferences.getUser()
             _localUser.postValue(user) // Ensure UI updates on the main thread
         }
+
     }
 
     fun refreshLocalUser() {
@@ -149,7 +151,11 @@ class UserViewModel @Inject constructor(
     private fun saveUserLocally(user: User) {
         viewModelScope.launch {
             userPreferences.saveUser(user)
-            _localUser.postValue(user) // Use postValue for background thread updates
+            _localUser.postValue(user)
+            // Notify CarViewModel to load user's data
+            viewModelScope.launch {
+                carManager.notifyUserLogin()
+            }
         }
     }
 
@@ -162,10 +168,9 @@ class UserViewModel @Inject constructor(
 
     fun logout() {
         viewModelScope.launch {
-            tokenManager.clearToken()
             userPreferences.clearUser()
-            _token.value = null
-            _localUser.value = null
+            tokenManager.clearToken()
+            _localUser.postValue(null)
         }
     }
 

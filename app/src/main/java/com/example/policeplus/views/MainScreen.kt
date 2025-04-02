@@ -99,17 +99,23 @@ fun MainScreen(navController: NavHostController = rememberNavController()) {
             composable("home") { HomeScreen(carViewModel,onSearch = { navController.navigate("data") },navController,userViewModel,draftViewModel)  }
             composable("data") { CarDataScreen(carViewModel) }
             composable("scan") { ScanScreen({ navController.popBackStack() }, { navController.navigate("data") }, carViewModel) }
-            composable("profile") { ProfileScreen(userViewModel, onLogout = {
-                navController.navigate("login") {
-                    popUpTo("home") { inclusive = true }  // ✅ Clear backstack on logout
-                }
-                userViewModel.logout()
-            },navController) }
+            composable("profile") { ProfileScreen(
+                userViewModel, onLogout = {
+                    navController.navigate("login") {
+                        popUpTo("home") { inclusive = true }  // ✅ Clear backstack on logout
+                    }
+                    userViewModel.logout()
+                },navController
+
+            ) }
             composable("history") { HistoryScreen(carViewModel,navController) }
             composable("register") { RegisterScreen(navController, userViewModel) }
             composable("login") { LoginScreen(navController, userViewModel) }
             composable("about") { AboutScreen({navController.popBackStack()}) }
-
+            composable("settings") { SettingsScreen(userViewModel, navController) }
+            composable("privacy") { /* TODO: Implement privacy policy screen */ }
+            composable("terms") { /* TODO: Implement terms of service screen */ }
+            composable("report") { /* TODO: Implement report issue screen */ }
         }
     }
 }
@@ -213,5 +219,3 @@ fun BottomNavigationBar(navController: NavController,userViewModel: UserViewMode
     }
 }
 data class NavItem(val label: String, val icon: Painter, val route: String)
-
-

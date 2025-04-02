@@ -17,18 +17,22 @@ import com.example.policeplus.models.Car
 
 @HiltViewModel
 class CarViewModel @Inject constructor(
-    application: Application, // <- add this
-    private val repository: CarRepository
+    application: Application,
+    private val repository: CarRepository,
+    private val carManager: CarManager
 ) : AndroidViewModel(application) {
 
     private val userPreferences = UserPreferences(application)
-
 
     private val _car = MutableLiveData<Car?>(null)
     val car: LiveData<Car?> = _car
 
     private val _carHistory = MutableStateFlow<List<Car>>(emptyList())
     val carHistory: StateFlow<List<Car>> = _carHistory
+
+    val latestScans: StateFlow<List<Car>> = _carHistory
+        .map { it.take(2) }
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val _isLoading = MutableLiveData(false)
     val isLoading: LiveData<Boolean> = _isLoading
@@ -40,30 +44,72 @@ class CarViewModel @Inject constructor(
     val error: LiveData<String> = _error
 
     private var userEmail: String = ""
+    private var carObserver: LiveData<List<CarEntity>>? = null
 
-    private var _allCars = MutableLiveData<List<CarEntity>>()
-    val allCars: LiveData<List<CarEntity>> get() = _allCars
+    private val _allCars = MutableLiveData<List<CarEntity>>(emptyList())
+    val allCars: LiveData<List<CarEntity>> = _allCars
+
+    private val _showDeleteConfirmationDialog = MutableStateFlow(false)
+    val showDeleteConfirmationDialog: StateFlow<Boolean> = _showDeleteConfirmationDialog
 
     init {
         loadUserAndHistory()
-    }
-
-     fun loadUserAndHistory() {
+        // Listen for login events
         viewModelScope.launch {
-            val user = userPreferences.getUser()
-            user?.let { it ->
-                userEmail = it.email
-                repository.getCarsByUser(userEmail).observeForever { cars ->
-                    _allCars.value = cars
-                    _carHistory.value = cars.map { it.toCar() }
-                }
+            carManager.loginEvent.collect {
+                loadUserAndHistory()
             }
         }
     }
 
-    val latestScans: StateFlow<List<Car>> = _carHistory
-        .map { it.take(2) }
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    fun loadUserAndHistory() {
+        viewModelScope.launch {
+            val user = userPreferences.getUser()
+            user?.let { it ->
+                userEmail = it.email
+                // Remove previous observer if it exists
+                carObserver?.let { observer ->
+                    observer.removeObserver { }
+                }
+                // Create new observer for current user
+                carObserver = if (it.userType == "police") {
+                    // Police can see all cars
+                    repository.getCarsByUser(userEmail)
+                } else {
+                    // Normal users only see their own cars
+                    repository.getCarsByUser(it.email)
+                }
+                carObserver?.observeForever { cars ->
+                    val uniqueCars = cars?.distinctBy { it.licenseNumber } ?: emptyList()
+                    _allCars.postValue(uniqueCars)
+                    _carHistory.value = uniqueCars.map { it.toCar() }
+                }
+            } ?: run {
+                // Clear UI state when no user is logged in
+                _allCars.postValue(emptyList())
+                _carHistory.value = emptyList()
+                carObserver?.let { observer ->
+                    observer.removeObserver { }
+                }
+                carObserver = null
+            }
+        }
+    }
+
+    fun clearUserData() {
+        viewModelScope.launch {
+            _allCars.postValue(emptyList())
+            _carHistory.value = emptyList()
+            carObserver?.let { observer ->
+                observer.removeObserver { }
+            }
+            carObserver = null
+        }
+    }
+
+    private suspend fun insert(car: CarEntity) {
+        repository.insertCar(car)
+    }
 
     fun fetchCar(licensePlate: String) {
         viewModelScope.launch {
@@ -71,18 +117,29 @@ class CarViewModel @Inject constructor(
             _error.postValue("")
             try {
                 val response = api.getCarByPlate(licensePlate)
-                //delay(2000)
                 if (response.isSuccessful) {
-                    //Log.d("ticket", response.body()?.tickets?.get(0)?.ticketType.toString())
                     response.body()?.let { carData ->
-                        _car.postValue(carData)
-                       if(userPreferences.getUser()?.userType  =="police") insert(carData.toEntity(userEmail)) // ✅ Save with correct user
+                        val user = userPreferences.getUser()
+                        if (user?.userType == "police") {
+                            // Police can view and save any car
+                            _car.postValue(carData)
+                            insert(carData.toEntity(userEmail))
+                        } else {
+                            // For normal users, just check if they already have this car
+                            _car.postValue(carData)
+                            // Check if user already has this car
+                            val existingCar = repository.getCarByLicense(licensePlate, user?.email ?: "")
+                            if (existingCar.value == null) {
+                                insert(carData.toEntity(user?.email ?: ""))
+                            }
+                        }
                     }
                 } else {
                     _error.postValue(response.message())
                     _car.postValue(null)
                 }
             } catch (e: Exception) {
+                _error.postValue("Error fetching car data: ${e.message}")
                 _car.postValue(null)
             } finally {
                 _isLoading.postValue(false)
@@ -132,17 +189,25 @@ class CarViewModel @Inject constructor(
     }
 
 
-    private fun insert(car: CarEntity) = viewModelScope.launch {
-        repository.insertCar(car)
+    fun deleteACar(car: Car) {
+        viewModelScope.launch {
+            // Get current user's email
+            val user = userPreferences.getUser()
+            user?.let { currentUser ->
+                repository.deleteCar(car.id.toString(), currentUser.email)
+                // Reload user's cars after deletion
+                loadUserAndHistory()
+            }
+        }
     }
 
-    fun deleteACar(carToDelete:Car){
+    fun setShowDeleteConfirmationDialog(show: Boolean) {
         viewModelScope.launch {
-            _carHistory.value = _carHistory.value.filter { it.scanDate != carToDelete.scanDate }
-            repository.deleteCar(carToDelete.scanDate.toString())
+            _showDeleteConfirmationDialog.emit(show)
         }
     }
 }
+
 fun Car.toEntity(userEmail: String): CarEntity {
     return CarEntity(
         licenseNumber = this.licenseNumber,
@@ -180,6 +245,3 @@ fun CarEntity.toCar(): Car {
         scanDate = this.scanDate
     )
 }
-
-
-

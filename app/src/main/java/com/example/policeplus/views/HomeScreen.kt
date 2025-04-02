@@ -211,7 +211,11 @@ fun HomeScreen(viewModel: CarViewModel, onSearch: () -> Unit, navController:NavC
 
         SpeedDialFab(navController,draftViewModel,viewModel,userViewModel)
     }else{
-        CarDataScreen(viewModel)
+        CarDataScreen(
+            viewModel
+        )
+        SpeedDialFab(navController,draftViewModel,viewModel,userViewModel)
+
     }
 
 
@@ -265,12 +269,15 @@ fun SpeedDialFab(navController: NavController, draftViewModel: TicketDraftViewMo
                             showTicketDrawer = true
                         }
                     }
-                    MiniFab(icon = Icons.Default.Edit, label = "Create A Ticket") {
-                        draftViewModel.clearDraft()
-                        isExpanded = false
-                        resumeDraft = false
-                        showTicketDrawer = true
+                    if(userViewModel.localUser.value?.userType == "police"){
+                        MiniFab(icon = Icons.Default.Edit, label = "Create A Ticket") {
+                            draftViewModel.clearDraft()
+                            isExpanded = false
+                            resumeDraft = false
+                            showTicketDrawer = true
+                        }
                     }
+
                     MiniFab(icon = Icons.Default.Warning, label = "Report A Car") {
                         isExpanded = false
                         showReportDrawer = true

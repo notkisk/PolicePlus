@@ -4,26 +4,24 @@ import androidx.lifecycle.LiveData
 import com.example.policeplus.models.CarEntity
 import javax.inject.Inject
 
-
 class CarRepository @Inject constructor(private val carDao: CarDao) {
     suspend fun insertCar(car: CarEntity) {
         carDao.insertCar(car)
     }
 
-    suspend fun deleteCar(car: String) {
-        carDao.deleteCar(car)
+    suspend fun deleteCar(id: String, userEmail: String) {
+        carDao.deleteCar(id, userEmail)
     }
 
-    suspend fun deleteAllCars(){
-        carDao.deleteAllCars()
+    suspend fun deleteAllUserCars(email: String) {
+        carDao.deleteAllUserCars(email)
     }
 
-    fun getCarByLicense(license: String): LiveData<CarEntity?> {
-        return carDao.getCarByLicense(license)
+    fun getCarByLicense(license: String, userEmail: String): LiveData<CarEntity?> {
+        return carDao.getCarByLicense(license, userEmail)
     }
 
     fun getCarsByUser(email: String): LiveData<List<CarEntity>> {
         return carDao.getAllCarsByUser(email)
     }
 }
-
