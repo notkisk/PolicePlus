@@ -15,6 +15,10 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import com.example.policeplus.models.Car
 
+import org.apache.commons.text.similarity.LevenshteinDistance
+import org.apache.commons.text.similarity.JaroWinklerSimilarity
+import kotlin.math.max
+
 @HiltViewModel
 class CarViewModel @Inject constructor(
     application: Application,
@@ -116,31 +120,63 @@ class CarViewModel @Inject constructor(
             _isLoading.postValue(true)
             _error.postValue("")
             try {
+                Log.d("CarFetch", "Fetching car with license: $licensePlate")
                 val response = api.getCarByPlate(licensePlate)
+                Log.d("CarFetch", "Response code: ${response.code()}")
+                Log.d("CarFetch", "Response message: ${response.message()}")
+                Log.d("CarFetch", "Raw response: ${response.raw()}")
+                
                 if (response.isSuccessful) {
+                    Log.d("CarFetch", "API call successful")
                     response.body()?.let { carData ->
+                        Log.d("CarFetch", "Car data received: $carData")
                         val user = userPreferences.getUser()
+                        Log.d("CarFetch", "User type: ${user?.userType}, User name: ${user?.name}")
                         if (user?.userType == "police") {
-                            // Police can view and save any car
+                            Log.d("CarFetch", "Processing as police user")
                             _car.postValue(carData)
                             insert(carData.toEntity(userEmail))
                         } else {
-                            // For normal users, just check if they already have this car
-                            _car.postValue(carData)
-                            // Check if user already has this car
-                            val existingCar = repository.getCarByLicense(licensePlate, user?.email ?: "")
-                            if (existingCar.value == null) {
-                                insert(carData.toEntity(user?.email ?: ""))
+                            Log.d("CarFetch", "Processing as normal user")
+                            Log.d("CarFetch", "Car owner: ${carData.owner}")
+                            Log.d("CarFetch", "User name: ${user?.name}")
+                            
+                            if (areNamesSimilar(carData.owner, user?.name ?: "")) {
+                                Log.d("CarFetch", "Names are similar, proceeding with car addition")
+                                _car.postValue(carData)
+                                val existingCar = repository.getCarByLicense(licensePlate, user?.email ?: "")
+                                if (existingCar.value == null) {
+                                    Log.d("CarFetch", "Car doesn't exist yet, adding new car")
+                                    if (user != null) {
+                                        insert(carData.toEntity(user.email))
+                                        Log.d("CarFetch", "Car inserted successfully")
+                                        loadUserAndHistory() // Force refresh after insertion
+                                    }
+                                } else {
+                                    Log.d("CarFetch", "Car already exists")
+                                    _error.postValue("You already have this car in your list")
+                                }
+                            } else {
+                                Log.d("CarFetch", "Names are not similar, access denied")
+                                _error.postValue("You do not have permission to view this car")
+                                loadUserAndHistory()
                             }
                         }
+                    } ?: run {
+                        Log.d("CarFetch", "Response body is null")
+                        _error.postValue("No car data received")
                     }
                 } else {
-                    _error.postValue(response.message())
-                    _car.postValue(null)
+                    Log.d("CarFetch", "API call failed: ${response.code()} - ${response.message()}")
+                    Log.d("CarFetch", "Error body: ${response.errorBody()?.string()}")
+                    _error.postValue("Failed to fetch car: ${response.message()}")
+                    loadUserAndHistory()
                 }
             } catch (e: Exception) {
+                Log.d("CarFetch", "Exception occurred: ${e.message}")
+                Log.d("CarFetch", "Stack trace: ${e.stackTraceToString()}")
                 _error.postValue("Error fetching car data: ${e.message}")
-                _car.postValue(null)
+                loadUserAndHistory()
             } finally {
                 _isLoading.postValue(false)
             }
@@ -244,4 +280,15 @@ fun CarEntity.toCar(): Car {
         address = this.address,
         scanDate = this.scanDate
     )
+}
+fun areNamesSimilar(name1: String, name2: String, levenshteinThreshold: Int = 90, jaroThreshold: Double = 0.90): Boolean {
+    if (name1.isBlank() || name2.isBlank()) return false
+
+    val levenshteinDistance = LevenshteinDistance().apply(name1, name2)
+    val maxLength = max(name1.length, name2.length)
+    val levenshteinSimilarity = ((maxLength - levenshteinDistance) / maxLength.toDouble()) * 100
+
+    val jaroSimilarity = JaroWinklerSimilarity().apply(name1, name2)
+
+    return levenshteinSimilarity >= levenshteinThreshold || jaroSimilarity >= jaroThreshold
 }

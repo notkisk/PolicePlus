@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.*
@@ -57,7 +58,7 @@ fun CarDataScreen(viewModel: CarViewModel) {
     val error by viewModel.error.observeAsState(initial = "")
     val userViewModel: UserViewModel = hiltViewModel()
     val user by userViewModel.localUser.observeAsState()
-
+    var showError by remember { mutableStateOf(true) }
     if (showDialog) {
         AddCarDialog(
             onDismiss = { showDialog = false },
@@ -157,22 +158,22 @@ fun CarDataScreen(viewModel: CarViewModel) {
                         color = Color(0xFF0077B6)
                     )
                 }
-            } else if (error.isNotEmpty()) {
-                ErrorMessage(error)
-            } else if (allCars.isEmpty()) {
+            }  else if (allCars.isEmpty()) {
                 EmptyState(user?.userType == "police")
             } else {
+                if (error.isNotEmpty() && showError) {
+                    ErrorMessage(error, onDismiss = { showError = false })
+                }
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+
                     if(user?.userType != "police") {
-                        // For normal users, only show cars associated with their email
-                        val userCars = allCars.filter { it.userEmail == user?.email }
-                        items(userCars) { carEntity ->
+                        items(allCars) { carEntity ->
                             val car = carEntity.toCar()
-                            if (userCars.size == 1) {
-                                // Single car view - show details directly
+                            if (allCars.size == 1) {
+                                // Single car view for normal users - show details directly
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -185,7 +186,6 @@ fun CarDataScreen(viewModel: CarViewModel) {
                                     }
                                 }
                             } else {
-                                // Multiple cars - use expandable cards
                                 CarCard(
                                     car = car,
                                     expanded = expandedCardId == car.licenseNumber,
@@ -197,7 +197,6 @@ fun CarDataScreen(viewModel: CarViewModel) {
                             }
                         }
                     } else {
-                        // For police, show all scanned cars
                         item {
                             if (allCars.isNotEmpty()) {
                                 Card(
@@ -407,14 +406,13 @@ fun ScanDetails(car: Car) {
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        if (car.stolenCar == "Yes") {
-            StolenCarAlert()
-        }
         VehicleInfoSection(car)
         OwnerInfoSection(car)
         RegistrationStatusSection(car, ::formatDate)
         TicketsSection(car, ::formatDate)
-
+        if (car.stolenCar == "Yes") {
+            StolenCarAlert()
+        }
     }
 }
 
@@ -635,7 +633,7 @@ fun EmptyState(isPolice: Boolean) {
 }
 
 @Composable
-fun ErrorMessage(message: String) {
+fun ErrorMessage(message: String, onDismiss: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -646,21 +644,34 @@ fun ErrorMessage(message: String) {
         )
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Warning,
-                contentDescription = null,
-                tint = Color(0xFFE53935),
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = message,
-                color = Color(0xFFB71C1C),
-                fontSize = 14.sp
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Outlined.Warning,
+                    contentDescription = null,
+                    tint = Color(0xFFE53935),
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = message,
+                    color = Color(0xFFB71C1C),
+                    fontSize = 14.sp,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            IconButton(onClick = onDismiss) {
+                Icon(
+                    imageVector = Icons.Outlined.Close,
+                    contentDescription = "Dismiss",
+                    tint = Color(0xFFB71C1C)
+                )
+            }
         }
     }
 }

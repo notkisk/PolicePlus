@@ -121,6 +121,7 @@ dependencies {
 
     // optional - RxJava3 support
     implementation("androidx.datastore:datastore-preferences-rxjava3:1.1.3")
+    implementation("org.apache.commons:commons-text:1.10.0")
 
 
 }

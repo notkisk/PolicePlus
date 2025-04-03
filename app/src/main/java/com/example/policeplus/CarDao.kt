@@ -19,8 +19,8 @@ interface CarDao {
     @Query("SELECT * FROM car_table WHERE license_plate = :license AND user_email = :userEmail")
     fun getCarByLicense(license: String, userEmail: String): LiveData<CarEntity?>
 
-    @Query("DELETE FROM car_table WHERE id = :id AND user_email = :userEmail")
-    suspend fun deleteCar(id: String, userEmail: String)
+    @Query("DELETE FROM car_table WHERE id = :id")
+    suspend fun deleteCar(id: String)
 
     @Query("DELETE FROM car_table WHERE user_email = :email")
     suspend fun deleteAllUserCars(email: String)

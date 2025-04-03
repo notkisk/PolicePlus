@@ -9,8 +9,8 @@ class CarRepository @Inject constructor(private val carDao: CarDao) {
         carDao.insertCar(car)
     }
 
-    suspend fun deleteCar(id: String, userEmail: String) {
-        carDao.deleteCar(id, userEmail)
+    suspend fun deleteCar(id: String, email: String) {
+        carDao.deleteCar(id)
     }
 
     suspend fun deleteAllUserCars(email: String) {

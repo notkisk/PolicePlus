@@ -2,6 +2,7 @@ package com.example.policeplus
 import TokenManager
 import UserPreferences
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -27,7 +28,8 @@ class UserViewModel @Inject constructor(
 
     private val _token = MutableStateFlow<String?>(null)
     val token: StateFlow<String?> = _token
-
+    private val _driverLicense = MutableLiveData<String>()
+    val driverLicense: LiveData<String> get() = _driverLicense
     // IMPORTANT: Remove profileData and normalProfileData.  We only need localUser.
     // private val _profileData = MutableLiveData<LoginResponse>()
     // val profileData: LiveData<LoginResponse> get() = _profileData
@@ -103,21 +105,26 @@ class UserViewModel @Inject constructor(
                 val response = repository.normalLoginUser(loginRequest.email, loginRequest.password)
                 if (response.isSuccessful && response.body() != null) {
                     val loginResponse = response.body()!!
-                    val user = User(
-                        id = 0, // Or get from response
-                        email = loginResponse.user.email,
-                        password = "", // Do NOT store
-                        name = loginResponse.user.name,
-                        licenseNumber = loginResponse.user.licenseNumber,
-                        rank = "",
-                        department = "", // Or default
-                        badgeNumber = "",
-                        carsScanned = 0,  // Or default
-                        officerImage = "", // Or default
-                        userType = "normal", // IMPORTANT: Set userType
-                    )
+                    _driverLicense.postValue(response.headers()["X-Driver-License"])
+                    val user = response.headers()["X-Driver-License"]?.let {
+                        User(
+                            id = 0, // Or get from response
+                            email = loginResponse.user.email,
+                            password = "", // Do NOT store
+                            name = loginResponse.user.name,
+                            licenseNumber = loginResponse.user.licenseNumber,
+                            rank = "",
+                            department = "", // Or default
+                            badgeNumber = it,
+                            carsScanned = 0,  // Or default
+                            officerImage = "", // Or default
+                            userType = "normal", // IMPORTANT: Set userType
+                        )
+                    }
 
-                    saveUserLocally(user)
+                    if (user != null) {
+                        saveUserLocally(user)
+                    }
 
                     if (loginResponse.token.isNotEmpty()) {
                         RetrofitInstance.authToken = loginResponse.token
