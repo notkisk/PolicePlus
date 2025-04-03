@@ -28,7 +28,7 @@ import androidx.navigation.NavController
 import com.example.policeplus.R
 import com.example.policeplus.ui.theme.InterFont
 import com.example.policeplus.ui.theme.PolicePlusBlue
-import com.example.policeplus.ui.theme.Titles
+import com.example.policeplus.ui.theme.*
 import com.example.policeplus.views.components.HistoryScanCard
 import com.example.policeplus.views.components.getValidityStatus
 
@@ -81,7 +81,7 @@ fun HistoryScreen(viewModel: CarViewModel, navController: NavController) {
             text = "Scan History",
             fontSize = 26.sp,
             fontWeight = FontWeight.Bold,
-            color = Titles,
+            color = Color.Black,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 

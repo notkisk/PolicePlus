@@ -112,7 +112,9 @@ fun MainScreen(navController: NavHostController = rememberNavController()) {
             composable("register") { RegisterScreen(navController, userViewModel) }
             composable("login") { LoginScreen(navController, userViewModel) }
             composable("about") { AboutScreen({navController.popBackStack()}) }
-            composable("settings") { SettingsScreen(userViewModel, navController) }
+            composable("settings") { SettingsScreen(
+                userViewModel, navController,
+            ) }
             composable("privacy") { /* TODO: Implement privacy policy screen */ }
             composable("terms") { /* TODO: Implement terms of service screen */ }
             composable("report") { /* TODO: Implement report issue screen */ }

@@ -2,7 +2,9 @@ package com.example.policeplus.views
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -51,6 +53,7 @@ import com.example.policeplus.R
 import com.example.policeplus.UserViewModel
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ProfileScreen(userViewModel: UserViewModel, onLogout: () -> Unit, navController: NavController) {
     val localUser by userViewModel.localUser.observeAsState() // Observe the COMBINED local user
@@ -245,22 +248,7 @@ fun ProfileScreen(userViewModel: UserViewModel, onLogout: () -> Unit, navControl
                             }
                         }
 
-                        Button(
-                            onClick = onLogout,
-                            colors = ButtonDefaults.buttonColors(Color.Red),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp)
-                                .height(60.dp),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text(
-                                "Logout",
-                                color = Color.White,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+              LogoutButton(onLogout)
                     }
                 }
             }
@@ -317,7 +305,10 @@ fun ProfileScreen(userViewModel: UserViewModel, onLogout: () -> Unit, navControl
                                 )
                                 Box(
                                     modifier = Modifier
-                                        .background(Color(0xFFFFFFFF), shape = RoundedCornerShape(8.dp))
+                                        .background(
+                                            Color(0xFFFFFFFF),
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
                                         .padding(horizontal = 8.dp, vertical = 6.dp)
                                 ) {
                                     user.licenseNumber?.let { it1 ->
@@ -412,17 +403,7 @@ fun ProfileScreen(userViewModel: UserViewModel, onLogout: () -> Unit, navControl
                             }
                         }
 
-                        Button(
-                            onClick = onLogout,
-                            colors = ButtonDefaults.buttonColors(Color.Red),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp)
-                                .height(60.dp),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text("Logout", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                        }
+                     LogoutButton(onLogout)
                     }
                 }
             }
@@ -447,6 +428,26 @@ fun ProfileScreen(userViewModel: UserViewModel, onLogout: () -> Unit, navControl
                 }
             }
         )
+    }
+}
+
+@Composable
+fun LogoutButton(onLogout: () -> Unit) {
+    Button(
+        onClick = onLogout,
+        colors = ButtonDefaults.buttonColors(Color.Red),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .height(40.dp),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Row (modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center){
+            Icon(painter = painterResource(R.drawable.outline_logout_24), contentDescription = "logout",tint = Color.White)
+            Spacer(modifier = Modifier.width(4.dp))
+            Text("Logout", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+
+        }
     }
 }
 
