@@ -248,7 +248,7 @@ fun ProfileScreen(userViewModel: UserViewModel, onLogout: () -> Unit, navControl
                             }
                         }
 
-              LogoutButton(onLogout)
+                        LogoutButton(onLogout)
                     }
                 }
             }
@@ -403,7 +403,7 @@ fun ProfileScreen(userViewModel: UserViewModel, onLogout: () -> Unit, navControl
                             }
                         }
 
-                     LogoutButton(onLogout)
+                        LogoutButton(onLogout)
                     }
                 }
             }
@@ -461,10 +461,17 @@ fun ProfileInfoRow(icon: Painter, label: String, value: String) {
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(painter = icon, contentDescription = label, tint = Color.Gray, modifier = Modifier.size(20.dp))
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(text = label, fontWeight = FontWeight.Bold, color = Color.Black, modifier = Modifier.width(100.dp))
-        Text(text = value, color = Color.Black)
+        Icon(
+            painter = icon,
+            contentDescription = null,
+            tint = Color(0xFF0077B6),
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Column {
+            Text(text = label, fontSize = 14.sp, color = Color.Gray)
+            Text(text = value, fontSize = 16.sp)
+        }
     }
     HorizontalDivider(thickness = 1.dp, color = Color.LightGray)  // Separator
 
@@ -476,13 +483,18 @@ fun SettingsItem(icon: Painter, text: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
+            .clickable(onClick = onClick)
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(painter = icon, contentDescription = text, tint = Color.Gray, modifier = Modifier.size(24.dp))
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(text = text, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+        Icon(
+            painter = icon,
+            contentDescription = null,
+            tint = Color(0xFF0077B6),
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(text = text, fontSize = 16.sp)
     }
     HorizontalDivider(thickness = 1.dp, color = Color.LightGray)  // Separator
 

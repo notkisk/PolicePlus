@@ -122,15 +122,16 @@ dependencies {
     // optional - RxJava3 support
     implementation("androidx.datastore:datastore-preferences-rxjava3:1.1.3")
     implementation("org.apache.commons:commons-text:1.10.0")
-    implementation ("androidx.work:work-runtime-ktx:2.8.1")
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation ("androidx.hilt:hilt-work:1.0.0")
     kapt ("androidx.hilt:hilt-compiler:1.0.0")
 
-}
 
 
 
 
-kapt {
+
+/*kapt {
     correctErrorTypes = true
+}*/
 }

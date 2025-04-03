@@ -2,7 +2,9 @@ package com.example.policeplus
 import TokenManager
 import UserPreferences
 import android.app.Application
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -15,11 +17,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.example.policeplus.utils.NotificationHelper
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
+@RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
 class UserViewModel @Inject constructor(
     private val repository: UserRepository,
     private val carManager: CarManager,
+    private val carRepository: CarRepository,
     application: Application
 ) : AndroidViewModel(application) {
 
@@ -48,6 +56,7 @@ class UserViewModel @Inject constructor(
             }
         }
         fetchLocalUser()
+        startExpirationChecks()
     }
 
     // ... (registerUser remains unchanged) ...
@@ -188,6 +197,33 @@ class UserViewModel @Inject constructor(
                 onResult(response.isSuccessful, response.message())
             } catch (e: Exception) {
                 onResult(false, "Error: ${e.localizedMessage}")
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun startExpirationChecks() {
+        viewModelScope.launch {
+            localUser.observeForever { user ->
+                if (user?.userType == "normal") {
+                    val userEmail = user.email
+                    carRepository.getCarsByUser(userEmail).observeForever { cars ->
+                        cars?.forEach { car ->
+                            val insuranceDate = car.insuranceEnd?.let { 
+                                Instant.parse(it).atZone(ZoneId.of("UTC")).toLocalDate()
+                            }
+                            val inspectionDate = car.inspectionEnd?.let { 
+                                Instant.parse(it).atZone(ZoneId.of("UTC")).toLocalDate()
+                            }
+                            NotificationHelper.checkAndNotifyExpirations(
+                                getApplication(),
+                                insuranceDate,
+                                inspectionDate,
+                                car.licenseNumber
+                            )
+                        }
+                    }
+                }
             }
         }
     }
