@@ -224,6 +224,7 @@ fun HomeScreen(viewModel: CarViewModel, onSearch: () -> Unit, navController:NavC
 
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SpeedDialFab(navController: NavController, draftViewModel: TicketDraftViewModel = viewModel(), carViewModel: CarViewModel, userViewModel: UserViewModel) {

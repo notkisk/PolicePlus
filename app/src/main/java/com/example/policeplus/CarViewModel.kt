@@ -242,6 +242,10 @@ class CarViewModel @Inject constructor(
             _showDeleteConfirmationDialog.emit(show)
         }
     }
+
+    fun getCarsByUser(email: String): LiveData<List<CarEntity>> {
+        return repository.getCarsByUser(email)
+    }
 }
 
 fun Car.toEntity(userEmail: String): CarEntity {
