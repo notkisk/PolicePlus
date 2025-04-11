@@ -5,9 +5,11 @@ import android.app.Application
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.policeplus.models.NormalUser
 import com.example.policeplus.models.User
@@ -33,7 +35,6 @@ class UserViewModel @Inject constructor(
 
     private val userPreferences = UserPreferences(application)
     private val tokenManager = TokenManager(application)
-
     private val _token = MutableStateFlow<String?>(null)
     val token: StateFlow<String?> = _token
     private val _driverLicense = MutableLiveData<String>()
@@ -115,7 +116,8 @@ class UserViewModel @Inject constructor(
                 if (response.isSuccessful && response.body() != null) {
                     val loginResponse = response.body()!!
                     _driverLicense.postValue(response.headers()["X-Driver-License"])
-                    val user = response.headers()["X-Driver-License"]?.let {
+
+                    val user = response.body()?.user?.let {
                         User(
                             id = 0, // Or get from response
                             email = loginResponse.user.email,
@@ -124,7 +126,7 @@ class UserViewModel @Inject constructor(
                             licenseNumber = loginResponse.user.licenseNumber,
                             rank = "",
                             department = "", // Or default
-                            badgeNumber = it,
+                            badgeNumber = "it",
                             carsScanned = 0,  // Or default
                             officerImage = "", // Or default
                             userType = "normal", // IMPORTANT: Set userType
@@ -133,6 +135,18 @@ class UserViewModel @Inject constructor(
 
                     if (user != null) {
                         saveUserLocally(user)
+                        carManager.notifyUserLogin()
+                        Log.d("CarFetch", user.toString())
+                        try {
+                            viewModelScope.launch {
+                                user.licenseNumber?.let { license ->
+                                    val carViewModel = CarViewModel(getApplication(), carRepository, carManager)
+                                    carViewModel.fetchCar(license)
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.d("fetching after login", "Couldn't fetch car, error: ${e.message}")
+                        }
                     }
 
                     if (loginResponse.token.isNotEmpty()) {

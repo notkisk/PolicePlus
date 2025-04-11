@@ -4,7 +4,9 @@ import androidx.lifecycle.LiveData
 import com.example.policeplus.models.CarEntity
 import javax.inject.Inject
 
-class CarRepository @Inject constructor(private val carDao: CarDao) {
+class CarRepository @Inject constructor(
+    private val carDao: CarDao,
+) {
     suspend fun insertCar(car: CarEntity) {
         carDao.insertCar(car)
     }

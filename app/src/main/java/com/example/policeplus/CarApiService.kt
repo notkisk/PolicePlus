@@ -14,7 +14,7 @@ interface CarApiService {
     @GET("/cars")
     fun getCars(): Call<List<Car>>
 
-    @GET("/cars/{plate}")
+    @GET("cars/{plate}")
     suspend fun getCarByPlate(@Path("plate") plate: String): Response<Car>
 
     @POST("/register")

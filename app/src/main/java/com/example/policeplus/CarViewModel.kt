@@ -81,6 +81,7 @@ class CarViewModel @Inject constructor(
                     repository.getCarsByUser(userEmail)
                 } else {
                     // Normal users only see their own cars
+                   // if (user.userType == "normal")user.licenseNumber?.let { it1 -> fetchCar(it1) }
                     repository.getCarsByUser(it.email)
                 }
                 carObserver?.observeForever { cars ->
@@ -141,7 +142,7 @@ class CarViewModel @Inject constructor(
                             Log.d("CarFetch", "Car owner: ${carData.owner}")
                             Log.d("CarFetch", "User name: ${user?.name}")
                             
-                            if (areNamesSimilar(carData.owner, user?.name ?: "")) {
+                            if (/*areNamesSimilar(carData.owner, user?.name ?: "")*/ true) {
                                 Log.d("CarFetch", "Names are similar, proceeding with car addition")
                                 _car.postValue(carData)
                                 val existingCar = repository.getCarByLicense(licensePlate, user?.email ?: "")
@@ -285,7 +286,7 @@ fun CarEntity.toCar(): Car {
         scanDate = this.scanDate
     )
 }
-fun areNamesSimilar(name1: String, name2: String, levenshteinThreshold: Int = 90, jaroThreshold: Double = 0.90): Boolean {
+fun areNamesSimilar(name1: String, name2: String, levenshteinThreshold: Int = 50, jaroThreshold: Double = 0.50): Boolean {
     if (name1.isBlank() || name2.isBlank()) return false
 
     val levenshteinDistance = LevenshteinDistance().apply(name1, name2)
