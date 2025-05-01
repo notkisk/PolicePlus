@@ -14,7 +14,7 @@ object RetrofitInstance {
     private val authInterceptor = Interceptor { chain ->
         val request: Request = chain.request().newBuilder().apply {
             authToken?.let {
-                addHeader("Authorization", "Bearer $it")  // Attach token to headers
+                addHeader("Authorization", "Bearer $it")
             }
         }.build()
         chain.proceed(request)

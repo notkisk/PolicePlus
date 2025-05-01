@@ -1,6 +1,7 @@
 package com.example.policeplus.views
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
@@ -257,8 +258,13 @@ fun AddCarDialog(onDismiss: () -> Unit, onAdd: (String) -> Unit) {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun CarCard(car: Car, expanded: Boolean, onClick: () -> Unit, viewModel: CarViewModel) {
-    val showDeleteConfirmationDialog by viewModel.showDeleteConfirmationDialog.collectAsState()
+fun CarCard(
+    car: Car,
+    expanded: Boolean,
+    onClick: () -> Unit,
+    viewModel: CarViewModel
+) {
+    val carToDelete by viewModel.carToDelete.collectAsState()
 
     Card(
         modifier = Modifier
@@ -316,7 +322,7 @@ fun CarCard(car: Car, expanded: Boolean, onClick: () -> Unit, viewModel: CarView
                 ) {
                     IconButton(
                         onClick = {
-                            viewModel.setShowDeleteConfirmationDialog(true)
+                            viewModel.showDeleteDialogForCar(car)
                         },
                         modifier = Modifier
                             .size(32.dp)
@@ -343,41 +349,36 @@ fun CarCard(car: Car, expanded: Boolean, onClick: () -> Unit, viewModel: CarView
 
             if (expanded) {
                 Spacer(modifier = Modifier.height(16.dp))
-                Divider(color = if (car.stolenCar == "Yes") Color(0xFFFFE0B2) else Color(0xFFE0E0E0))
+                HorizontalDivider(color = if (car.stolenCar == "Yes") Color(0xFFFFE0B2) else Color(0xFFE0E0E0))
                 Spacer(modifier = Modifier.height(16.dp))
                 ScanDetails(car)
             }
         }
     }
 
-    if (showDeleteConfirmationDialog) {
+    // Only show dialog for the selected car
+    if (carToDelete?.id == car.id) {
+        Log.d("car data", "car license number: ${car.licenseNumber}, car id: ${car.id}")
         AlertDialog(
-            onDismissRequest = { viewModel.setShowDeleteConfirmationDialog(false) },
+            onDismissRequest = { viewModel.cancelDelete() },
             title = { Text("Remove Car") },
-            text = { 
-                Text(
-                    "Are you sure you want to remove ${car.makeAndModel} (${car.licenseNumber})?"
-                )
+            text = {
+                Text("Are you sure you want to remove ${car.makeAndModel} (${car.licenseNumber})?")
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.deleteACar(car)
-                        viewModel.setShowDeleteConfirmationDialog(false)
+                        viewModel.confirmDeleteCar()
                     },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = Color(0xFFE53935)
-                    )
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFFE53935))
                 ) {
                     Text("Remove")
                 }
             },
             dismissButton = {
                 TextButton(
-                    onClick = { viewModel.setShowDeleteConfirmationDialog(false) },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = Color(0xFF0077B6)
-                    )
+                    onClick = { viewModel.cancelDelete() },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF0077B6))
                 ) {
                     Text("Cancel")
                 }

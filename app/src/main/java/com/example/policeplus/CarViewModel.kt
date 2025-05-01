@@ -238,6 +238,24 @@ class CarViewModel @Inject constructor(
         }
     }
 
+    private val _carToDelete = MutableStateFlow<Car?>(null)
+    val carToDelete: StateFlow<Car?> = _carToDelete
+
+    fun showDeleteDialogForCar(car: Car) {
+        _carToDelete.value = car
+    }
+
+    fun confirmDeleteCar() {
+        _carToDelete.value?.let {
+            deleteACar(it)
+        }
+        _carToDelete.value = null // reset
+    }
+
+    fun cancelDelete() {
+        _carToDelete.value = null
+    }
+
     fun setShowDeleteConfirmationDialog(show: Boolean) {
         viewModelScope.launch {
             _showDeleteConfirmationDialog.emit(show)
@@ -286,6 +304,9 @@ fun CarEntity.toCar(): Car {
         scanDate = this.scanDate
     )
 }
+
+
+
 fun areNamesSimilar(name1: String, name2: String, levenshteinThreshold: Int = 50, jaroThreshold: Double = 0.50): Boolean {
     if (name1.isBlank() || name2.isBlank()) return false
 
