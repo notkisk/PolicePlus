@@ -37,12 +37,6 @@ object DatabaseModule {
         return database.carDao()
     }
 
-
-
-
-
-
-
 }
 
 

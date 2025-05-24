@@ -49,6 +49,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -116,21 +117,25 @@ fun HistoryScanCard(car: Car, navController: NavController, onDelete:()->Unit) {
     val taxUnpaid = car.taxPaid.lowercase() != "paid"
     val isStolen = car.stolenCar.lowercase() == "yes"
 
-    val hasIssue = insuranceExpired || inspectionExpired || taxUnpaid || isStolen
+    val hasTickets = car.tickets?.isNotEmpty() == true
+    val hasIssue = insuranceExpired || inspectionExpired || taxUnpaid || isStolen || hasTickets
 
     val statusText = when {
         isStolen -> "STOLEN"
+        hasTickets -> "TICKETS"
         hasIssue -> "ISSUE"
         else -> "CLEAR"
     }
 
     val statusColor = when (statusText) {
         "STOLEN" -> Color(0xFFFFCDD2)
+        "TICKETS" -> Color(0xFFFFF3E0)
         "ISSUE" -> Color(0xFFFFF9C4)
         else -> Color(0xFFC8E6C9)
     }
     val statusTextColor = when (statusText) {
         "STOLEN" -> Color(0xFFD32F2F)
+        "TICKETS" -> Color(0xFFFF6D00)
         "ISSUE" -> Color(0xFFFBC02D)
         else -> Color(0xFF10D97F)
     }
@@ -253,7 +258,9 @@ fun HistoryScanCard(car: Car, navController: NavController, onDelete:()->Unit) {
                     }
                 }
 
-             /*   Row(verticalAlignment = Alignment.CenterVertically) {
+
+                /* Tax Payment Row - Currently commented out
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(painterResource(R.drawable.outline_attach_money_24), contentDescription = null, tint = Color.Gray)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -264,19 +271,61 @@ fun HistoryScanCard(car: Car, navController: NavController, onDelete:()->Unit) {
                 }*/
 
                 Spacer(modifier = Modifier.height(4.dp))
-            Row{
-                Text(
-                    text = "Owner: ",
-                    fontSize = 14.sp,
-                    color = Color.Gray, fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = car.owner ?: "Unknown",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp
-                )
-            }
+                Row{
+                    Text(
+                        text = "Owner: ",
+                        fontSize = 14.sp,
+                        color = Color.Gray, fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = car.owner ?: "Unknown",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    )
+                }
 
+                if (hasTickets) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFFFF3E0), RoundedCornerShape(8.dp))
+                            .padding(8.dp)
+                    ) {
+                        Text(
+                            text = "TICKETS (${car.tickets?.size ?: 0})",
+                            color = Color(0xFFFF6D00),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        car.tickets?.take(2)?.forEach { ticket ->
+                            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                                Text(
+                                    text = "• ${ticket.ticketType}",
+                                    color = Color.Black,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = ticket.details,
+                                    color = Color.DarkGray,
+                                    fontSize = 12.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                        if ((car.tickets?.size ?: 0) > 2) {
+                            Text(
+                                text = "+${(car.tickets?.size ?: 0) - 2} more tickets...",
+                                color = Color.Gray,
+                                fontSize = 12.sp,
+                                fontStyle = FontStyle.Italic
+                            )
+                        }
+                    }
+                }
 
                 if (hasIssue) {
                     Spacer(modifier = Modifier.height(10.dp))
@@ -347,31 +396,7 @@ fun HistoryScanCard(car: Car, navController: NavController, onDelete:()->Unit) {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
-@Composable
-fun TicketsSection(car: Car, formatDate: (String?) -> String) {
-    if (car.tickets.isEmpty()) return // No tickets, skip section
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(6.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            SectionHeader("🎫 Tickets")
-
-            car.tickets.forEachIndexed { index, ticket ->
-                TicketItem(ticket, formatDate)
-
-                // Divider between tickets
-                if (index != car.tickets.lastIndex) {
-                    HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 1.dp, modifier = Modifier.padding(vertical = 8.dp))
-                }
-            }
-        }
-    }
-}
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TicketItem(ticket: Ticket, formatDate: (String?) -> String) {

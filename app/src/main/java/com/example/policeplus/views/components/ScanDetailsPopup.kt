@@ -17,9 +17,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Share
@@ -62,6 +66,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavController
 import com.example.policeplus.models.Car
 import com.example.policeplus.models.CarEntity
+
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -202,13 +207,73 @@ fun ScanDetailsPopup(car: Car, officerName: String, scanDate: String, onDismiss:
                         val status = when (label) {
                             "Insurance Status:" -> getValidityStatus(car.insuranceEnd)
                             "Inspection Status:" -> getValidityStatus(car.inspectionEnd)
-                            "Tax Status:" -> car.taxPaid ?: "Unknown"
-                            "Stolen Car:" -> car.stolenCar
-                            else -> null
+                            "Tax Status:" -> if (car.taxPaid == "Paid") "Valid" else "Expired"
+                            "Stolen Car:" -> if (car.stolenCar == "Yes") "Stolen" else "Valid"
+                            else -> ""
                         }
-                        InfoRowPopup(label, rawValue, status?.let { getStatusBadge(it) {
-                            coroutineScope.launch { snackbarHostState.showSnackbar("$label - $it") }
-                        } })
+                        InfoRowPopup(label, rawValue) {
+                            if (status.isNotEmpty()) {
+                                getStatusBadge(status) {}
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!car.tickets.isNullOrEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("🚨", fontSize = 18.sp)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Tickets (${car.tickets.size})", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        }
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                        
+                        car.tickets.forEachIndexed { index, ticket ->
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Ticket #${index + 1}: ${ticket.ticketType}",
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color(0xFFFF6D00)
+                                    )
+                                    Text(
+                                        text = formatDateDisplay(ticket.ticketDate) ?: "Unknown date",
+                                        fontSize = 12.sp,
+                                        color = Color.Gray
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = ticket.details,
+                                    fontSize = 14.sp,
+                                    color = Color.DarkGray,
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                                if (index < car.tickets.size - 1) {
+                                    Divider(
+                                        modifier = Modifier.padding(vertical = 8.dp),
+                                        thickness = 1.dp,
+                                        color = Color.LightGray.copy(alpha = 0.5f)
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }

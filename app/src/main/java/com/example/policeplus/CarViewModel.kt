@@ -30,6 +30,9 @@ class CarViewModel @Inject constructor(
 
     private val _car = MutableLiveData<Car?>(null)
     val car: LiveData<Car?> = _car
+    
+    private val _tickets = MutableStateFlow<List<com.example.policeplus.models.Ticket>>(emptyList())
+    val tickets: StateFlow<List<com.example.policeplus.models.Ticket>> = _tickets
 
     private val _carHistory = MutableStateFlow<List<Car>>(emptyList())
     val carHistory: StateFlow<List<Car>> = _carHistory
@@ -81,13 +84,25 @@ class CarViewModel @Inject constructor(
                     repository.getCarsByUser(userEmail)
                 } else {
                     // Normal users only see their own cars
-                   // if (user.userType == "normal")user.licenseNumber?.let { it1 -> fetchCar(it1) }
-                    repository.getCarsByUser(it.email)
+                    repository.getCarsByUser(userEmail)
                 }
                 carObserver?.observeForever { cars ->
                     val uniqueCars = cars?.distinctBy { it.licenseNumber } ?: emptyList()
                     _allCars.postValue(uniqueCars)
-                    _carHistory.value = uniqueCars.map { it.toCar() }
+                    
+                    // Get the current car with tickets if available
+                    val currentCarWithTickets = _car.value
+                    
+                    // Map cars, preserving tickets if this is the current car
+                    _carHistory.value = uniqueCars.map { carEntity ->
+                        val car = carEntity.toCar()
+                        // If this is the current car that has tickets, use that version
+                        if (currentCarWithTickets?.licenseNumber == car.licenseNumber) {
+                            currentCarWithTickets
+                        } else {
+                            car
+                        }
+                    }
                 }
             } ?: run {
                 // Clear UI state when no user is logged in
@@ -125,7 +140,6 @@ class CarViewModel @Inject constructor(
                 val response = api.getCarByPlate(licensePlate)
                 Log.d("CarFetch", "Response code: ${response.code()}")
                 Log.d("CarFetch", "Response message: ${response.message()}")
-                Log.d("CarFetch", "Raw response: ${response.raw()}")
                 
                 if (response.isSuccessful) {
                     Log.d("CarFetch", "API call successful")
@@ -133,10 +147,19 @@ class CarViewModel @Inject constructor(
                         Log.d("CarFetch", "Car data received: $carData")
                         val user = userPreferences.getUser()
                         Log.d("CarFetch", "User type: ${user?.userType}, User name: ${user?.name}")
+                        
+                        // Always process tickets if they exist in the response
+                        val tickets = carData.tickets ?: emptyList()
+                        Log.d("CarFetch", "Processing ${tickets.size} tickets")
+                        val carWithTickets = carData.copy(tickets = tickets)
+                        
+                        // Update the current car with tickets
+                        _car.postValue(carWithTickets)
+                        
                         if (user?.userType == "police") {
                             Log.d("CarFetch", "Processing as police user")
-                            _car.postValue(carData)
-                            insert(carData.toEntity(userEmail))
+                            // Don't store tickets in local database
+                            insert(carWithTickets.copy(tickets = emptyList()).toEntity(userEmail))
                         } else {
                             Log.d("CarFetch", "Processing as normal user")
                             Log.d("CarFetch", "Car owner: ${carData.owner}")
@@ -144,17 +167,20 @@ class CarViewModel @Inject constructor(
                             
                             if (/*areNamesSimilar(carData.owner, user?.name ?: "")*/ true) {
                                 Log.d("CarFetch", "Names are similar, proceeding with car addition")
-                                _car.postValue(carData)
+                                
                                 val existingCar = repository.getCarByLicense(licensePlate, user?.email ?: "")
                                 if (existingCar.value == null) {
                                     Log.d("CarFetch", "Car doesn't exist yet, adding new car")
                                     if (user != null) {
-                                        insert(carData.toEntity(user.email))
+                                        // Don't store tickets in local database
+                                        insert(carWithTickets.copy(tickets = emptyList()).toEntity(user.email))
                                         Log.d("CarFetch", "Car inserted successfully")
                                         loadUserAndHistory() // Force refresh after insertion
                                     }
                                 } else {
-                                    Log.d("CarFetch", "Car already exists")
+                                    Log.d("CarFetch", "Car already exists, updating UI with latest data")
+                                    // Update the UI with the latest data including tickets
+                                    loadUserAndHistory()
                                     _error.postValue("You already have this car in your list")
                                 }
                             } else {
@@ -179,7 +205,7 @@ class CarViewModel @Inject constructor(
                 _error.postValue("Error fetching car data: ${e.message}")
                 loadUserAndHistory()
             } finally {
-                _isLoading.postValue(false)
+                _isLoading.value = false
             }
         }
     }
@@ -265,6 +291,7 @@ class CarViewModel @Inject constructor(
     fun getCarsByUser(email: String): LiveData<List<CarEntity>> {
         return repository.getCarsByUser(email)
     }
+
 }
 
 fun Car.toEntity(userEmail: String): CarEntity {
@@ -283,6 +310,7 @@ fun Car.toEntity(userEmail: String): CarEntity {
         address = this.address,
         scanDate = System.currentTimeMillis(),
         userEmail = userEmail,
+
     )
 }
 
@@ -301,7 +329,8 @@ fun CarEntity.toCar(): Car {
         color = this.color,
         driverLicense = this.driverLicense,
         address = this.address,
-        scanDate = this.scanDate
+        scanDate = this.scanDate,
+        tickets = emptyList() // Tickets will be added from the API response
     )
 }
 

@@ -3,7 +3,9 @@ package com.example.policeplus.views
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.runtime.remember
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -41,8 +43,6 @@ import com.example.policeplus.models.Ticket
 import com.example.policeplus.models.CarEntity
 import com.example.policeplus.toCar
 import com.example.policeplus.views.components.ShimmerLoadingCard
-import com.example.policeplus.views.components.TicketItem
-import com.example.policeplus.views.components.TicketsSection
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -57,9 +57,15 @@ fun CarDataScreen(viewModel: CarViewModel) {
     val allCars by viewModel.allCars.observeAsState(emptyList())
     val isLoading by viewModel.isLoading.observeAsState(initial = false)
     val error by viewModel.error.observeAsState(initial = "")
+    val tickets by viewModel.tickets.collectAsState()
     val userViewModel: UserViewModel = hiltViewModel()
     val user by userViewModel.localUser.observeAsState()
     var showError by remember { mutableStateOf(true) }
+    
+    // Store the current car to show tickets for
+    var currentCar by remember { mutableStateOf<Car?>(null) }
+    
+    // Tickets are now handled directly in the fetchCar function
     if (showDialog) {
         AddCarDialog(
             onDismiss = { showDialog = false },
@@ -173,6 +179,13 @@ fun CarDataScreen(viewModel: CarViewModel) {
                     if(user?.userType != "police") {
                         items(allCars) { carEntity ->
                             val car = carEntity.toCar()
+                            val carWithTickets = if (car.licenseNumber == viewModel.car.value?.licenseNumber) {
+                                // Use the car data from the ViewModel which contains the tickets
+                                viewModel.car.value ?: car
+                            } else {
+                                car
+                            }
+                            
                             if (allCars.size == 1) {
                                 // Single car view for normal users - show details directly
                                 Card(
@@ -183,12 +196,26 @@ fun CarDataScreen(viewModel: CarViewModel) {
                                     colors = CardDefaults.cardColors(containerColor = Color.White)
                                 ) {
                                     Column(modifier = Modifier.padding(16.dp)) {
-                                        ScanDetails(car)
+                                        currentCar = carWithTickets
+                                        Log.d("CarDataScreen", "Displaying car with ${carWithTickets.tickets.size} tickets")
+                                        Log.d("CarDataScreen", "Tickets: ${carWithTickets.tickets}")
+                                        ScanDetails(
+                                            car = carWithTickets,
+                                            viewModel = viewModel
+                                        )
                                     }
                                 }
                             } else {
+                                val carWithTickets = if (car.licenseNumber == viewModel.car.value?.licenseNumber) {
+                                    // Use the car data from the ViewModel which contains the tickets
+                                    viewModel.car.value ?: car
+                                } else {
+                                    car
+                                }
+                                currentCar = carWithTickets
+                                Log.d("CarDataScreen", "Displaying car card with ${carWithTickets.tickets.size} tickets")
                                 CarCard(
-                                    car = car,
+                                    car = carWithTickets,
                                     expanded = expandedCardId == car.licenseNumber,
                                     onClick = {
                                         expandedCardId = if (expandedCardId == car.licenseNumber) null else car.licenseNumber
@@ -208,7 +235,20 @@ fun CarDataScreen(viewModel: CarViewModel) {
                                     colors = CardDefaults.cardColors(containerColor = Color.White)
                                 ) {
                                     Column(modifier = Modifier.padding(16.dp)) {
-                                        ScanDetails(allCars.last().toCar())
+                                        val lastCar = allCars.last().toCar()
+                                        val carWithTickets = if (viewModel.car.value != null) {
+                                            // Use the car from ViewModel which has tickets
+                                            viewModel.car.value!!
+                                        } else {
+                                            lastCar
+                                        }
+                                        currentCar = carWithTickets
+                                        Log.d("PoliceView", "Displaying car with ${carWithTickets.tickets.size} tickets")
+                                        Log.d("PoliceView", "Tickets: ${carWithTickets.tickets}")
+                                        ScanDetails(
+                                            car = carWithTickets,
+                                            viewModel = viewModel
+                                        )
                                     }
                                 }
                             }
@@ -351,7 +391,7 @@ fun CarCard(
                 Spacer(modifier = Modifier.height(16.dp))
                 HorizontalDivider(color = if (car.stolenCar == "Yes") Color(0xFFFFE0B2) else Color(0xFFE0E0E0))
                 Spacer(modifier = Modifier.height(16.dp))
-                ScanDetails(car)
+                ScanDetails(car, viewModel)
             }
         }
     }
@@ -391,8 +431,14 @@ fun CarCard(
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ScanDetails(car: Car) {
+fun ScanDetails(car: Car, viewModel: CarViewModel) {
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    
+    LaunchedEffect(Unit) {
+        Log.d("TICKET_DEBUG", "Car tickets: ${car.tickets}")
+        Log.d("TICKET_DEBUG", "Car license: ${car.licenseNumber}")
+    }
+    
     fun formatDate(dateString: String?): String {
         return dateString?.let {
             try {
@@ -410,7 +456,10 @@ fun ScanDetails(car: Car) {
         VehicleInfoSection(car)
         OwnerInfoSection(car)
         RegistrationStatusSection(car, ::formatDate)
-        TicketsSection(car, ::formatDate)
+        
+        // Always show tickets section with the car's tickets
+        TicketsSection(tickets = car.tickets, formatDate = ::formatDate)
+
         if (car.stolenCar == "Yes") {
             StolenCarAlert()
         }
@@ -472,9 +521,9 @@ fun RegistrationStatusSection(car: Car, formatDate: (String?) -> String) {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TicketsSection(car: Car, formatDate: (String?) -> String) {
-    if (car.tickets.isEmpty()) return // No tickets, skip section
-
+fun TicketsSection(tickets: List<Ticket>, formatDate: (String?) -> String) {
+    Log.d("TICKET_DEBUG", "Rendering TicketsSection with ${tickets.size} tickets")
+    
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -482,14 +531,56 @@ fun TicketsSection(car: Car, formatDate: (String?) -> String) {
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            SectionHeader("🎫 Tickets")
+            Text(
+                text = "🎫 Tickets (${tickets.size})",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
 
-            car.tickets.forEachIndexed { index, ticket ->
-                TicketItem(ticket, formatDate)
-
-                // Divider between tickets
-                if (index != car.tickets.lastIndex) {
-                    HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 1.dp, modifier = Modifier.padding(vertical = 8.dp))
+            if (tickets.isEmpty()) {
+                Text(
+                    text = "No tickets found",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    tickets.forEach { ticket ->
+                        Log.d("TICKET_DEBUG", "Rendering ticket: ${ticket.ticketType}")
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            border = BorderStroke(1.dp, Color.LightGray),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp)
+                            ) {
+                                Text(
+                                    text = "Type: ${ticket.ticketType}",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                if (ticket.details.isNotBlank()) {
+                                    Text(
+                                        text = "Details: ${ticket.details}",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Date: ${formatDate(ticket.ticketDate)}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.Gray
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
