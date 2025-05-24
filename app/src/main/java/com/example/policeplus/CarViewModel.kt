@@ -93,29 +93,25 @@ class CarViewModel @Inject constructor(
                                 val uniqueCars = cars.distinctBy { it.licenseNumber }
                                 _allCars.postValue(uniqueCars)
                                 
-                                // Get the current car with tickets if available
-                                val currentCarWithTickets = _car.value
-                                
-                                // Load tickets for each car
-                                val carsWithTickets = uniqueCars.map { carEntity ->
+                                if (uniqueCars.isNotEmpty()) {
+                                    // For vehicle owners, we'll take the first car (they should only have one)
+                                    val carEntity = uniqueCars.first()
                                     val tickets = repository.getTicketsForCarSync(carEntity.id)
-                                    val car = carEntity.toCar().copy(tickets = tickets)
+                                    val carWithTickets = carEntity.toCar().copy(tickets = tickets)
+                                    _car.postValue(carWithTickets)
                                     
-                                    // If this is the current car that has tickets, use that version
-                                    if (currentCarWithTickets?.licenseNumber == car.licenseNumber) {
-                                        currentCarWithTickets
-                                    } else {
-                                        car
+                                    // Also update the car history with the latest data
+                                    _carHistory.value = uniqueCars.map { it.toCar() }
+                                    
+                                    // Update current car if it exists in the new data
+                                    _car.value?.let { currentCar ->
+                                        uniqueCars.find { it.id == currentCar.id }?.let { updatedCar ->
+                                            _car.value = updatedCar.toCar().copy(tickets = tickets)
+                                        }
                                     }
-                                }
-                                
-                                _carHistory.value = carsWithTickets
-                                
-                                // Update the current car if it's in the history
-                                _car.value?.let { currentCar ->
-                                    carsWithTickets.find { it.id == currentCar.id }?.let { updatedCar ->
-                                        _car.value = updatedCar
-                                    }
+                                } else {
+                                    _car.postValue(null)
+                                    _carHistory.value = emptyList()
                                 }
                             } catch (e: Exception) {
                                 Log.e("CarViewModel", "Error processing car data", e)
@@ -298,6 +294,10 @@ class CarViewModel @Inject constructor(
 
     fun getCarsByUser(email: String): LiveData<List<CarEntity>> {
         return repository.getCarsByUser(email)
+    }
+    
+    fun updateCar(car: Car) {
+        _car.value = car
     }
 
 }

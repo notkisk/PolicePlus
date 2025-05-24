@@ -58,11 +58,22 @@ fun CarDataScreen(viewModel: CarViewModel) {
     var expandedCardId by remember { mutableStateOf<String?>(null) }
 
     val allCars by viewModel.allCars.observeAsState(emptyList())
+    val userViewModel: UserViewModel = hiltViewModel()
+    val user by userViewModel.localUser.observeAsState()
+    
+    // Use derivedStateOf to optimize recomposition
+    val userCars by remember(allCars, user) {
+        derivedStateOf {
+            if (user?.userType == "police") {
+                allCars
+            } else {
+                allCars.filter { it.userEmail == user?.email }
+            }
+        }
+    }
     val isLoading by viewModel.isLoading.observeAsState(initial = false)
     val error by viewModel.error.observeAsState(initial = "")
     val tickets by viewModel.tickets.collectAsState()
-    val userViewModel: UserViewModel = hiltViewModel()
-    val user by userViewModel.localUser.observeAsState()
     var showError by remember { mutableStateOf(true) }
     
     // Store the current car to show tickets for
@@ -172,23 +183,33 @@ fun CarDataScreen(viewModel: CarViewModel) {
                         color = Color(0xFF0077B6)
                     )
                 }
-            } else if (allCars.isEmpty()) {
-                EmptyState(user?.userType == "police")
             } else {
-                if (error.isNotEmpty() && showError) {
-                    ErrorMessage(error, onDismiss = { showError = false })
+                LaunchedEffect(Unit) {
+                    Log.d("CarDataScreen", "User cars: ${userCars.size}, User type: ${user?.userType}")
+                    Log.d("CarDataScreen", "All cars: ${allCars.size}, Current user: ${user?.email}")
                 }
                 
-                if (user?.userType != "police") {
-                    allCars.forEach { carEntity ->
-                        val car = carEntity.toCar()
-                        val carWithTickets = if (car.licenseNumber == viewModel.car.value?.licenseNumber) {
-                            viewModel.car.value ?: car
-                        } else {
-                            car
+                if (userCars.isEmpty()) {
+                    EmptyState(user?.userType == "police")
+                } else if (error.isNotEmpty() && showError) {
+                    ErrorMessage(error, onDismiss = { showError = false })
+                } else if (user?.userType != "police") {
+                    LaunchedEffect(userCars) {
+                        if (userCars.isNotEmpty()) {
+                            val carEntity = userCars.first()
+                            val tickets = viewModel.tickets.value
+                            val carWithTickets = carEntity.toCar().copy(tickets = tickets)
+                            viewModel.updateCar(carWithTickets)
                         }
+                    }
+                    
+                    userCars.forEach { carEntity ->
+                        val car = carEntity.toCar()
+                        val carWithTickets = viewModel.car.value?.takeIf { 
+                            it.licenseNumber == car.licenseNumber 
+                        } ?: car
                         
-                        if (allCars.size == 1) {
+                        if (userCars.size == 1) {
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -220,9 +241,8 @@ fun CarDataScreen(viewModel: CarViewModel) {
                         }
                     }
                 } else {
-                    allCars.lastOrNull()?.let { carEntity ->
-                        val lastCar = carEntity.toCar()
-                        val carWithTickets = viewModel.car.value ?: lastCar
+                    userCars.lastOrNull()?.let { carEntity ->
+                        val carWithTickets = viewModel.car.value ?: carEntity.toCar()
                         
                         Card(
                             modifier = Modifier
@@ -248,7 +268,6 @@ fun CarDataScreen(viewModel: CarViewModel) {
                 }
             }
         }
-
 
 
 @Composable
