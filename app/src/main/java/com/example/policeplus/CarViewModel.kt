@@ -33,6 +33,9 @@ class CarViewModel @Inject constructor(
     
     private val _tickets = MutableStateFlow<List<com.example.policeplus.models.Ticket>>(emptyList())
     val tickets: StateFlow<List<com.example.policeplus.models.Ticket>> = _tickets
+    
+    private val _carWithTickets = MutableStateFlow<Car?>(null)
+    val carWithTickets: StateFlow<Car?> = _carWithTickets
 
     private val _carHistory = MutableStateFlow<List<Car>>(emptyList())
     val carHistory: StateFlow<List<Car>> = _carHistory
@@ -71,47 +74,67 @@ class CarViewModel @Inject constructor(
 
     fun loadUserAndHistory() {
         viewModelScope.launch {
-            val user = userPreferences.getUser()
-            user?.let { it ->
-                userEmail = it.email
-                // Remove previous observer if it exists
-                carObserver?.let { observer ->
-                    observer.removeObserver { }
-                }
-                // Create new observer for current user
-                carObserver = if (it.userType == "police") {
-                    // Police can see all cars
-                    repository.getCarsByUser(userEmail)
-                } else {
-                    // Normal users only see their own cars
-                    repository.getCarsByUser(userEmail)
-                }
-                carObserver?.observeForever { cars ->
-                    val uniqueCars = cars?.distinctBy { it.licenseNumber } ?: emptyList()
-                    _allCars.postValue(uniqueCars)
+            try {
+                val user = userPreferences.getUser()
+                if (user != null) {
+                    userEmail = user.email
                     
-                    // Get the current car with tickets if available
-                    val currentCarWithTickets = _car.value
+                    // Remove previous observer if it exists
+                    carObserver?.let { observer ->
+                        observer.removeObserver {}
+                    }
                     
-                    // Map cars, preserving tickets if this is the current car
-                    _carHistory.value = uniqueCars.map { carEntity ->
-                        val car = carEntity.toCar()
-                        // If this is the current car that has tickets, use that version
-                        if (currentCarWithTickets?.licenseNumber == car.licenseNumber) {
-                            currentCarWithTickets
-                        } else {
-                            car
+                    // Set up the observer for car updates
+                    carObserver = repository.getCarsByUser(user.email)
+                    
+                    carObserver?.observeForever { cars ->
+                        viewModelScope.launch {
+                            try {
+                                val uniqueCars = cars.distinctBy { it.licenseNumber }
+                                _allCars.postValue(uniqueCars)
+                                
+                                // Get the current car with tickets if available
+                                val currentCarWithTickets = _car.value
+                                
+                                // Load tickets for each car
+                                val carsWithTickets = uniqueCars.map { carEntity ->
+                                    val tickets = repository.getTicketsForCarSync(carEntity.id)
+                                    val car = carEntity.toCar().copy(tickets = tickets)
+                                    
+                                    // If this is the current car that has tickets, use that version
+                                    if (currentCarWithTickets?.licenseNumber == car.licenseNumber) {
+                                        currentCarWithTickets
+                                    } else {
+                                        car
+                                    }
+                                }
+                                
+                                _carHistory.value = carsWithTickets
+                                
+                                // Update the current car if it's in the history
+                                _car.value?.let { currentCar ->
+                                    carsWithTickets.find { it.id == currentCar.id }?.let { updatedCar ->
+                                        _car.value = updatedCar
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                Log.e("CarViewModel", "Error processing car data", e)
+                                _error.postValue("Error processing car data: ${e.message}")
+                            }
                         }
                     }
+                } else {
+                    // Clear UI state when no user is logged in
+                    _allCars.postValue(emptyList())
+                    _carHistory.value = emptyList()
+                    carObserver?.let { observer ->
+                        observer.removeObserver {}
+                    }
+                    carObserver = null
                 }
-            } ?: run {
-                // Clear UI state when no user is logged in
-                _allCars.postValue(emptyList())
-                _carHistory.value = emptyList()
-                carObserver?.let { observer ->
-                    observer.removeObserver { }
-                }
-                carObserver = null
+            } catch (e: Exception) {
+                Log.e("CarViewModel", "Error loading user history", e)
+                _error.postValue("Error loading history: ${e.message}")
             }
         }
     }
@@ -127,8 +150,8 @@ class CarViewModel @Inject constructor(
         }
     }
 
-    private suspend fun insert(car: CarEntity) {
-        repository.insertCar(car)
+    private suspend fun insert(car: CarEntity): Long {
+        return repository.insertCar(car)
     }
 
     fun fetchCar(licensePlate: String) {
@@ -146,55 +169,40 @@ class CarViewModel @Inject constructor(
                     response.body()?.let { carData ->
                         Log.d("CarFetch", "Car data received: $carData")
                         val user = userPreferences.getUser()
-                        Log.d("CarFetch", "User type: ${user?.userType}, User name: ${user?.name}")
+                        Log.d("CarFetch", "User type: ${user?.userType}")
                         
-                        // Always process tickets if they exist in the response
-                        val tickets = carData.tickets ?: emptyList()
-                        Log.d("CarFetch", "Processing ${tickets.size} tickets")
-                        val carWithTickets = carData.copy(tickets = tickets)
-                        
-                        // Update the current car with tickets
-                        _car.postValue(carWithTickets)
-                        
-                        if (user?.userType == "police") {
-                            Log.d("CarFetch", "Processing as police user")
-                            // Don't store tickets in local database
-                            insert(carWithTickets.copy(tickets = emptyList()).toEntity(userEmail))
-                        } else {
-                            Log.d("CarFetch", "Processing as normal user")
-                            Log.d("CarFetch", "Car owner: ${carData.owner}")
-                            Log.d("CarFetch", "User name: ${user?.name}")
+                        if (user != null) {
+                            val carEntity = carData.toEntity(user.email)
+                            val carId = insert(carEntity)
                             
-                            if (/*areNamesSimilar(carData.owner, user?.name ?: "")*/ true) {
-                                Log.d("CarFetch", "Names are similar, proceeding with car addition")
-                                
-                                val existingCar = repository.getCarByLicense(licensePlate, user?.email ?: "")
-                                if (existingCar.value == null) {
-                                    Log.d("CarFetch", "Car doesn't exist yet, adding new car")
-                                    if (user != null) {
-                                        // Don't store tickets in local database
-                                        insert(carWithTickets.copy(tickets = emptyList()).toEntity(user.email))
-                                        Log.d("CarFetch", "Car inserted successfully")
-                                        loadUserAndHistory() // Force refresh after insertion
-                                    }
-                                } else {
-                                    Log.d("CarFetch", "Car already exists, updating UI with latest data")
-                                    // Update the UI with the latest data including tickets
-                                    loadUserAndHistory()
-                                    _error.postValue("You already have this car in your list")
-                                }
-                            } else {
-                                Log.d("CarFetch", "Names are not similar, access denied")
-                                _error.postValue("You do not have permission to view this car")
-                                loadUserAndHistory()
+                            // Save tickets to database with the returned car ID
+                            val tickets = carData.tickets ?: emptyList()
+                            if (tickets.isNotEmpty()) {
+                                repository.saveTickets(carId.toInt(), tickets)
                             }
+                            
+                            // Update the car with tickets
+                            val car = carEntity.toCar().copy(tickets = tickets)
+                            _car.postValue(car)
+                            _carWithTickets.value = car
+                            
+                            // Update car history with the new car data
+                            _carHistory.value = _carHistory.value?.toMutableList()?.apply {
+                                removeAll { it.licenseNumber == car.licenseNumber }
+                                add(0, car)
+                                sortByDescending { it.id }
+                            } ?: listOf(car)
+                        } else {
+                            Log.d("CarFetch", "No user logged in")
+                            _error.postValue("No user logged in")
                         }
                     } ?: run {
                         Log.d("CarFetch", "Response body is null")
-                        _error.postValue("No car data received")
+                        _error.postValue("No car found with license: $licensePlate")
+                        loadUserAndHistory()
                     }
                 } else {
-                    Log.d("CarFetch", "API call failed: ${response.code()} - ${response.message()}")
+                    Log.d("CarFetch", "API call failed")
                     Log.d("CarFetch", "Error body: ${response.errorBody()?.string()}")
                     _error.postValue("Failed to fetch car: ${response.message()}")
                     loadUserAndHistory()

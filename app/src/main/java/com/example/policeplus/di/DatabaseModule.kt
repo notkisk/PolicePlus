@@ -7,7 +7,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.policeplus.CarDao
 import com.example.policeplus.CarDatabase
 import com.example.policeplus.CarRepository
+import com.example.policeplus.TicketDao
 import com.example.policeplus.UserRepository
+import com.example.policeplus.migrations.MIGRATION_3_4
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,15 +28,21 @@ object DatabaseModule {
         return Room.databaseBuilder(
             context.applicationContext,
             CarDatabase::class.java,
-            "car_db"
-        ).fallbackToDestructiveMigration().addMigrations(MIGRATION_2_3).build()
-
-
+            "car_database"
+        )
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+        .fallbackToDestructiveMigration()
+        .build()
     }
 
     @Provides
     fun provideCarDao(database: CarDatabase): CarDao {
         return database.carDao()
+    }
+    
+    @Provides
+    fun provideTicketDao(database: CarDatabase): TicketDao {
+        return database.ticketDao()
     }
 
 }

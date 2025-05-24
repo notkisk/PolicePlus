@@ -11,14 +11,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Warning
@@ -81,12 +84,16 @@ fun CarDataScreen(viewModel: CarViewModel) {
             .fillMaxSize()
             .background(Color(0xFFF9F9F9))
     ) {
+        val scrollState = rememberScrollState()
+        
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
-                .padding(top = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(top = 24.dp)
+                .verticalScroll(scrollState),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Header with gradient background
             Surface(
@@ -165,83 +172,66 @@ fun CarDataScreen(viewModel: CarViewModel) {
                         color = Color(0xFF0077B6)
                     )
                 }
-            }  else if (allCars.isEmpty()) {
+            } else if (allCars.isEmpty()) {
                 EmptyState(user?.userType == "police")
             } else {
                 if (error.isNotEmpty() && showError) {
                     ErrorMessage(error, onDismiss = { showError = false })
                 }
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-
-                    if(user?.userType != "police") {
-                        items(allCars) { carEntity ->
-                            val car = carEntity.toCar()
-                            val carWithTickets = if (car.licenseNumber == viewModel.car.value?.licenseNumber) {
-                                // Use the car data from the ViewModel which contains the tickets
-                                viewModel.car.value ?: car
-                            } else {
-                                car
-                            }
-                            
-                            if (allCars.size == 1) {
-                                // Single car view for normal users - show details directly
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 8.dp),
-                                    shape = RoundedCornerShape(16.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                                ) {
-                                    Column(modifier = Modifier.padding(16.dp)) {
-                                        currentCar = carWithTickets
-                                        Log.d("CarDataScreen", "Displaying car with ${carWithTickets.tickets.size} tickets")
-                                        Log.d("CarDataScreen", "Tickets: ${carWithTickets.tickets}")
-                                        ScanDetails(
-                                            car = carWithTickets,
-                                            viewModel = viewModel
-                                        )
-                                    }
-                                }
-                            } else {
-                                val carWithTickets = if (car.licenseNumber == viewModel.car.value?.licenseNumber) {
-                                    // Use the car data from the ViewModel which contains the tickets
-                                    viewModel.car.value ?: car
-                                } else {
-                                    car
-                                }
-                                currentCar = carWithTickets
-                                Log.d("CarDataScreen", "Displaying car card with ${carWithTickets.tickets.size} tickets")
-                                CarCard(
-                                    car = carWithTickets,
-                                    expanded = expandedCardId == car.licenseNumber,
-                                    onClick = {
-                                        expandedCardId = if (expandedCardId == car.licenseNumber) null else car.licenseNumber
-                                    },
-                                    viewModel = viewModel
-                                )
-                            }
+                
+                if (user?.userType != "police") {
+                    allCars.forEach { carEntity ->
+                        val car = carEntity.toCar()
+                        val carWithTickets = if (car.licenseNumber == viewModel.car.value?.licenseNumber) {
+                            viewModel.car.value ?: car
+                        } else {
+                            car
                         }
-                    } else {
-                        item {
-                            if (allCars.isNotEmpty()) {
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 8.dp),
-                                    shape = RoundedCornerShape(16.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                                ) {
-                                    Column(modifier = Modifier.padding(16.dp)) {
-                                        val lastCar = allCars.last().toCar()
-                                        val carWithTickets = if (viewModel.car.value != null) {
-                                            // Use the car from ViewModel which has tickets
-                                            viewModel.car.value!!
-                                        } else {
-                                            lastCar
-                                        }
+                        
+                        if (allCars.size == 1) {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.White)
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    currentCar = carWithTickets
+                                    Log.d("CarDataScreen", "Displaying car with ${carWithTickets.tickets.size} tickets")
+                                    Log.d("CarDataScreen", "Tickets: ${carWithTickets.tickets}")
+                                    ScanDetails(
+                                        car = carWithTickets,
+                                        viewModel = viewModel
+                                    )
+                                }
+                            }
+                        } else {
+                            currentCar = carWithTickets
+                            Log.d("CarDataScreen", "Displaying car card with ${carWithTickets.tickets.size} tickets")
+                            CarCard(
+                                car = carWithTickets,
+                                expanded = expandedCardId == car.licenseNumber,
+                                onClick = {
+                                    expandedCardId = if (expandedCardId == car.licenseNumber) null else car.licenseNumber
+                                },
+                                viewModel = viewModel
+                            )
+                        }
+                    }
+                } else {
+                    allCars.lastOrNull()?.let { carEntity ->
+                        val lastCar = carEntity.toCar()
+                        val carWithTickets = viewModel.car.value ?: lastCar
+                        
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
                                         currentCar = carWithTickets
                                         Log.d("PoliceView", "Displaying car with ${carWithTickets.tickets.size} tickets")
                                         Log.d("PoliceView", "Tickets: ${carWithTickets.tickets}")
@@ -254,12 +244,12 @@ fun CarDataScreen(viewModel: CarViewModel) {
                             }
                         }
                     }
-                    item { Spacer(modifier = Modifier.height(16.dp)) }
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }
-    }
-}
+
+
 
 @Composable
 fun AddCarDialog(onDismiss: () -> Unit, onAdd: (String) -> Unit) {
@@ -305,6 +295,8 @@ fun CarCard(
     viewModel: CarViewModel
 ) {
     val carToDelete by viewModel.carToDelete.collectAsState()
+    val tickets = car.tickets ?: emptyList()
+    val ticketCount = tickets.size
 
     Card(
         modifier = Modifier
@@ -334,6 +326,26 @@ fun CarCard(
                         fontSize = 16.sp,
                         color = if (car.stolenCar == "Yes") Color(0xFFF57C00) else Color(0xFF757575)
                     )
+                    if (ticketCount > 0) {
+                        Row(
+                            modifier = Modifier.padding(top = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = "Tickets",
+                                tint = Color(0xFFFF6D00),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "$ticketCount ${if (ticketCount == 1) "Ticket" else "Tickets"}",
+                                fontSize = 14.sp,
+                                color = Color(0xFFFF6D00)
+                            )
+                        }
+                    }
+                    
                     if (car.stolenCar == "Yes") {
                         Row(
                             modifier = Modifier.padding(top = 8.dp),
@@ -433,9 +445,10 @@ fun CarCard(
 @Composable
 fun ScanDetails(car: Car, viewModel: CarViewModel) {
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    val tickets = car.tickets ?: emptyList()
     
     LaunchedEffect(Unit) {
-        Log.d("TICKET_DEBUG", "Car tickets: ${car.tickets}")
+        Log.d("TICKET_DEBUG", "Car tickets: $tickets")
         Log.d("TICKET_DEBUG", "Car license: ${car.licenseNumber}")
     }
     
@@ -450,15 +463,18 @@ fun ScanDetails(car: Car, viewModel: CarViewModel) {
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         VehicleInfoSection(car)
         OwnerInfoSection(car)
         RegistrationStatusSection(car, ::formatDate)
         
-        // Always show tickets section with the car's tickets
-        TicketsSection(tickets = car.tickets, formatDate = ::formatDate)
+        if (tickets.isNotEmpty()) {
+            TicketsSection(tickets = tickets, formatDate = ::formatDate)
+        }
 
         if (car.stolenCar == "Yes") {
             StolenCarAlert()
@@ -531,60 +547,109 @@ fun TicketsSection(tickets: List<Ticket>, formatDate: (String?) -> String) {
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "🎫 Tickets (${tickets.size})",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-
-            if (tickets.isEmpty()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 Text(
-                    text = "No tickets found",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray,
-                    modifier = Modifier.padding(vertical = 8.dp)
+                    text = "Tickets (${tickets.size})",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
                 )
+                
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = "Tickets",
+                    tint = Color(0xFFFF6D00),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            if (tickets.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No tickets found",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+                }
             } else {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    tickets.forEach { ticket ->
-                        Log.d("TICKET_DEBUG", "Rendering ticket: ${ticket.ticketType}")
+                tickets.forEach { ticket ->
+                    Log.d("TICKET_DEBUG", "Rendering ticket: ${ticket.ticketType}")
+                    
+                    val cardColors = when (ticket.ticketType.lowercase()) {
+                        "warning" -> Color(0xFFFFF8E1) to Color(0xFFFFA000)
+                        "fine" -> Color(0xFFFFEBEE) to Color(0xFFE53935)
+                        else -> Color(0xFFE3F2FD) to Color(0xFF2196F3)
+                    }
+                        
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            border = BorderStroke(1.dp, Color.LightGray),
-                            shape = RoundedCornerShape(8.dp)
+                            border = BorderStroke(1.dp, cardColors.second.copy(alpha = 0.3f)),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = cardColors.first)
                         ) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(12.dp)
+                                    .padding(16.dp)
                             ) {
-                                Text(
-                                    text = "Type: ${ticket.ticketType}",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                if (ticket.details.isNotBlank()) {
+                                // Header with ticket type and date
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
                                     Text(
-                                        text = "Details: ${ticket.details}",
-                                        style = MaterialTheme.typography.bodyMedium
+                                        text = ticket.ticketType.replaceFirstChar { it.uppercase() },
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = cardColors.second
+                                    )
+                                    
+                                    Text(
+                                        text = formatDate(ticket.ticketDate) ?: "",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color.Gray
                                     )
                                 }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Date: ${formatDate(ticket.ticketDate)}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.Gray
-                                )
+                                
+                                Spacer(modifier = Modifier.height(8.dp))
+                                
+                                // Ticket details
+                                if (ticket.details.isNotBlank()) {
+                                    Text(
+                                        text = ticket.details,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.DarkGray,
+                                        lineHeight = 20.sp
+                                    )
+                                }
+                                
+                                // Driver's license if available
+                                if (!ticket.driverLicense.isNullOrBlank()) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Driver's License: ${ticket.driverLicense}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color.Gray
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)

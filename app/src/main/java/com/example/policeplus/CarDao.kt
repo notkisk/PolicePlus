@@ -14,7 +14,7 @@ interface CarDao {
     fun getAllCarsByUser(email: String): LiveData<List<CarEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertCar(car: CarEntity)
+    suspend fun insertCar(car: CarEntity): Long
 
     @Query("SELECT * FROM car_table WHERE license_plate = :license AND user_email = :userEmail")
     fun getCarByLicense(license: String, userEmail: String): LiveData<CarEntity?>
