@@ -41,7 +41,7 @@ class CarViewModel @Inject constructor(
     val carHistory: StateFlow<List<Car>> = _carHistory
 
     val latestScans: StateFlow<List<Car>> = _carHistory
-        .map { it.take(2) }
+        .map { it.take(10) } // Show last 10 scans
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val _isLoading = MutableLiveData(false)
@@ -100,8 +100,11 @@ class CarViewModel @Inject constructor(
                                     val carWithTickets = carEntity.toCar().copy(tickets = tickets)
                                     _car.postValue(carWithTickets)
                                     
-                                    // Also update the car history with the latest data
-                                    _carHistory.value = uniqueCars.map { it.toCar() }
+                                    // Also update the car history with the latest data and their tickets
+                                    _carHistory.value = uniqueCars.map { carEntity ->
+                                        val carTickets = repository.getTicketsForCarSync(carEntity.id)
+                                        carEntity.toCar().copy(tickets = carTickets)
+                                    }
                                     
                                     // Update current car if it exists in the new data
                                     _car.value?.let { currentCar ->
@@ -182,12 +185,19 @@ class CarViewModel @Inject constructor(
                             _car.postValue(car)
                             _carWithTickets.value = car
                             
-                            // Update car history with the new car data
+                            // Update car history with the new scan
                             _carHistory.value = _carHistory.value?.toMutableList()?.apply {
-                                removeAll { it.licenseNumber == car.licenseNumber }
-                                add(0, car)
-                                sortByDescending { it.id }
-                            } ?: listOf(car)
+                                // Create a new car copy with the same tickets and database ID
+                                val historyCar = car.copy(
+                                    id = carId.toInt(), // Use the database ID to ensure tickets can be loaded
+                                    tickets = tickets.toList() // Copy the tickets list
+                                )
+                                add(0, historyCar)
+                                // Keep only the most recent 100 scans to prevent memory issues
+                                if (size > 100) {
+                                    removeAt(size - 1)
+                                }
+                            } ?: listOf(car.copy(id = carId.toInt(), tickets = tickets.toList()))
                         } else {
                             Log.d("CarFetch", "No user logged in")
                             _error.postValue("No user logged in")

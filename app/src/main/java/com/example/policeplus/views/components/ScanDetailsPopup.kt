@@ -2,6 +2,7 @@ package com.example.policeplus.views.components
 
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
@@ -220,6 +221,7 @@ fun ScanDetailsPopup(car: Car, officerName: String, scanDate: String, onDismiss:
                 }
             }
 
+            Log.d("ScanDetailsPopup", "Car ID: ${car.id}, Tickets: ${car.tickets}")
             if (!car.tickets.isNullOrEmpty()) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Card(

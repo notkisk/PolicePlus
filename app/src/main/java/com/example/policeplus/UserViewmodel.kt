@@ -196,6 +196,11 @@ class UserViewModel @Inject constructor(
         }
     }
 
+    fun isValidEmail(email: String): Boolean {
+        val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.+[A-Za-z]+"
+        return email.matches(emailRegex.toRegex())
+    }
+
     fun logout() {
         viewModelScope.launch {
             userPreferences.clearUser()

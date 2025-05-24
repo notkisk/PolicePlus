@@ -3,6 +3,8 @@ package com.example.policeplus.views
 import PoliceRegistrationForm
 import ToggleButtonItem
 import UserRegistrationForm
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -43,6 +45,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.MaterialTheme
 import androidx.navigation.NavController
 import com.example.policeplus.LoginRequest
 import com.example.policeplus.R
@@ -52,6 +55,7 @@ import com.example.policeplus.ui.theme.PolicePlusBlue
 
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun LoginScreen(navController: NavController, userViewModel: UserViewModel) {
     var isPoliceLogin by remember { mutableStateOf(true) }
@@ -90,6 +94,7 @@ fun LoginScreen(navController: NavController, userViewModel: UserViewModel) {
 }
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun LoginScreenReal(navController: NavController, userViewModel: UserViewModel, isPoliceLogin:Boolean) {
     var email by remember { mutableStateOf("") }
@@ -97,6 +102,8 @@ fun LoginScreenReal(navController: NavController, userViewModel: UserViewModel, 
     var isLoading by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var showPassword by remember { mutableStateOf(false) }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
@@ -107,13 +114,27 @@ fun LoginScreenReal(navController: NavController, userViewModel: UserViewModel, 
 
         val textFieldModifier = Modifier
             .fillMaxWidth()
-            .height(56.dp)
+            .height(70.dp)
             .clip(RoundedCornerShape(12.dp))
             .padding(horizontal = 16.dp)
 
         OutlinedTextField(
             value = email,
-            onValueChange = { email = it },
+            onValueChange = { 
+                email = it
+                emailError = null
+                message = null
+            },
+            isError = emailError != null,
+            supportingText = {
+                if (emailError != null) {
+                    Text(
+                        text = emailError!!,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            },
             placeholder = {
                 Text(
                     "Email",
@@ -126,15 +147,35 @@ fun LoginScreenReal(navController: NavController, userViewModel: UserViewModel, 
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = Color(0xFFF7F8F9),
                 unfocusedContainerColor = Color(0xFFF7F8F9),
-                focusedTextColor = Color.Black, unfocusedBorderColor = Color(0xFFE8ECF4)
-            ), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next)
+                focusedTextColor = Color.Black,
+                unfocusedBorderColor = if (emailError != null) MaterialTheme.colorScheme.error else Color(0xFFE8ECF4),
+                errorBorderColor = MaterialTheme.colorScheme.error
+            ),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
+            )
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
-
+        Spacer(modifier = Modifier.height(12.dp))
+        
         OutlinedTextField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = { 
+                password = it
+                passwordError = null
+                message = null
+            },
+            isError = passwordError != null,
+            supportingText = {
+                if (passwordError != null) {
+                    Text(
+                        text = passwordError!!,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            },
             placeholder = {
                 Text(
                     "Password",
@@ -157,37 +198,65 @@ fun LoginScreenReal(navController: NavController, userViewModel: UserViewModel, 
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = Color(0xFFF7F8F9),
                 unfocusedContainerColor = Color(0xFFF7F8F9),
-                focusedTextColor = Color.Black , unfocusedBorderColor = Color(0xFFE8ECF4)
-            ), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next)
+                focusedTextColor = Color.Black,
+                unfocusedBorderColor = if (passwordError != null) MaterialTheme.colorScheme.error else Color(0xFFE8ECF4),
+                errorBorderColor = MaterialTheme.colorScheme.error
+            ),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
+            )
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
             onClick = {
+                // Reset previous errors
+                emailError = null
+                passwordError = null
+                message = null
+                
+                // Validate inputs
+                var isValid = true
+                
+                if (email.isBlank()) {
+                    emailError = "Email is required"
+                    isValid = false
+                } else if (!userViewModel.isValidEmail(email)) {
+                    emailError = "Please enter a valid email address"
+                    isValid = false
+                }
+                
+                if (password.isBlank()) {
+                    passwordError = "Password is required"
+                    isValid = false
+                }
+                
+                if (!isValid) return@Button
+                
                 isLoading = true
                 val loginRequest = LoginRequest(email, password)
-/////////////////////////////////
-                if(isPoliceLogin){
-                    userViewModel.loginUser(loginRequest) { success, msg ->
-                        isLoading = false
-                        if (msg != null) {
-                            message = msg
+                
+                val loginCallback = { success: Boolean, msg: String? ->
+                    isLoading = false
+                    if (!success) {
+                        message = when {
+                            msg?.contains("401") == true -> "Invalid email or password"
+                            msg?.contains("timeout") == true -> "Connection timeout. Please check your internet"
+                            msg?.contains("unable to resolve host") == true -> "No internet connection"
+                            msg != null -> msg
+                            else -> "Login failed. Please try again"
                         }
-                        if (success) {
-                            navController.navigate("home")
-                        }
+                    } else {
+                        navController.navigate("home")
                     }
-                }else{
-                    userViewModel.loginNormal(loginRequest) { success, msg ->
-                        isLoading = false
-                        if (msg != null) {
-                            message = msg
-                        }
-                        if (success) {
-                            navController.navigate("home")
-                        }
-                    }
+                }
+                
+                if (isPoliceLogin) {
+                    userViewModel.loginUser(loginRequest, loginCallback)
+                } else {
+                    userViewModel.loginNormal(loginRequest, loginCallback)
                 }
 
             },
